@@ -3,14 +3,17 @@ import sys
 
 from world import World
 from config import * 
+from logger_setup import setup_logging
 
 
 
 def main():
+    logger = setup_logging()
     pygame.init()
     WIDTH, HEIGHT = MapConfig.width, MapConfig.height
-    screen = pygame.display.set_mode((WIDTH,HEIGHT))
-    pygame.display.set_caption('Fauna Fuck')
+    SCALE = DispConfig.scale
+    screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE))
+    pygame.display.set_caption('Fauna F**k')
     
     world = World(WIDTH, HEIGHT)
     running = True
@@ -31,8 +34,9 @@ def main():
 
         pygame.display.flip()
     
-    genesequence = world.collect_gene()
-    print(genesequence)
-
+    # 收集DNA
+    world.collect_DNAs()
+    # 收集RNA
+    world.collect_RNAs()
 if __name__ == '__main__':
     main()
