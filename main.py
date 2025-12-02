@@ -4,10 +4,16 @@ import sys
 from world import World
 from config import * 
 from logger_setup import setup_logging
+from pathlib import Path
 
 
 
 def main():
+    # 清空旧日志
+    log_file = Path(LogConfig.file)
+    if log_file.exists():
+        log_file.unlink()
+    
     logger = setup_logging()
     pygame.init()
     WIDTH, HEIGHT = MapConfig.width, MapConfig.height
