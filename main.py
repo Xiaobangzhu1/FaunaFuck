@@ -18,7 +18,12 @@ def main():
     pygame.init()
     WIDTH, HEIGHT = MapConfig.width, MapConfig.height
     SCALE = DispConfig.scale
-    screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE))
+    flags = pygame.DOUBLEBUF
+    try:
+        screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE), flags, vsync=1)
+    except TypeError:
+        # pygame 2.0+ supports vsync; 兼容旧版本
+        screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE), flags)
     pygame.display.set_caption('Fauna F**k')
     
     world = World(WIDTH, HEIGHT)
