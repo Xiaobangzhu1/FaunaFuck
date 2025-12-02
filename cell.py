@@ -171,6 +171,7 @@ class Cell():
     
     def move(self,direction: str):
         '''细胞移动一步'''
+        self.lock()
         if direction == 'd' :
             x = int(self.x)
             new_x = self.x + 1
@@ -216,7 +217,8 @@ class Cell():
         y = self.y
         # 尝试在附近生成新细胞
         directions = [(1,0), (-1,0), (0,1), (0,-1)]
-        random.shuffle(directions)
+        if CellConfig.randomize_reproduction_direction:
+            random.shuffle(directions)
         for dx, dy in directions:
             new_x = x + dx
             new_y = y + dy
@@ -232,7 +234,8 @@ class Cell():
         
     
     def die(self, reason: str) -> None:
-        self.dead = True
+        if not self.locked:
+            self.dead = True
 
     def jump_forward(self, command: str) -> None:
         """'[' 指令: 若当前 (x,y) 的当前 channel 值为 0 则跳转, 否则 ribosome+1"""
@@ -337,11 +340,17 @@ class Cell():
         if not hasattr(self, 'world') or self.world is None:
             return
         needed = CellConfig.die_mode
-        surroundings = [(-2,-2),(-2,-1),(-2,0),(-2,1),(-2,2),
-                        (-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),
-                        (0 ,-2),(0 ,-1),       (0 ,1),(0 ,2),
-                        (1 ,-2),(1 ,-1),(1 ,0),(1 ,1),(1 ,2),
-                        (2 ,-2),(2 ,-1),(2 ,0),(2 ,1),(2 ,2)]
+        if CellConfig.surroundings == 24:
+            surroundings = [(-2,-2),(-2,-1),(-2,0),(-2,1),(-2,2),
+                            (-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),
+                            (0 ,-2),(0 ,-1),       (0 ,1),(0 ,2),
+                            (1 ,-2),(1 ,-1),(1 ,0),(1 ,1),(1 ,2),
+                            (2 ,-2),(2 ,-1),(2 ,0),(2 ,1),(2 ,2)]
+        elif CellConfig.surroundings == 4:  
+            surroundings = [(-1,0),(1,0),(0,-1),(0,1)]
+        else: 
+            surroundings = [(-1,0),(1,0),(0,-1),(0,1),
+                            (-1,-1),(-1,1),(1,-1),(1,1)]
         x0, y0 = int(self.x), int(self.y)
         cnt = 0
         for dx, dy in surroundings:
@@ -353,9 +362,18 @@ class Cell():
             self.die('Overcrowded death.')
             
         
+    def lock(self):
+        "进入无敌状态"
+        self.locked = True
+        
+    def unlock(self):
+        "退出无敌状态"
+        self.locked = False
+        
     def act(self) -> None:
         '''细胞行为'''
         # 转录
+        self.unlock()
         self.check_death()
         if self.dead:
             return
