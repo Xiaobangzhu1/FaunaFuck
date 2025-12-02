@@ -337,10 +337,14 @@ class Cell():
         if not hasattr(self, 'world') or self.world is None:
             return
         needed = CellConfig.die_mode
-        offsets = [(1,0),(-1,0),(0,1),(0,-1), (1,1),(1,-1),(-1,1),(-1,-1)]
+        surroundings = [(-2,-2),(-2,-1),(-2,0),(-2,1),(-2,2),
+                        (-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),
+                        (0 ,-2),(0 ,-1),       (0 ,1),(0 ,2),
+                        (1 ,-2),(1 ,-1),(1 ,0),(1 ,1),(1 ,2),
+                        (2 ,-2),(2 ,-1),(2 ,0),(2 ,1),(2 ,2)]
         x0, y0 = int(self.x), int(self.y)
         cnt = 0
-        for dx, dy in offsets:
+        for dx, dy in surroundings:
             nx = (x0 + dx) % MapConfig.width
             ny = (y0 + dy) % MapConfig.height
             if self.world.cells_map[nx, ny]:
@@ -352,17 +356,10 @@ class Cell():
     def act(self) -> None:
         '''细胞行为'''
         # 转录
-        if CellConfig.debug_mode:
-            self.logger.debug(f'Transcripting cell at ({self.x}, {self.y})')
-        self.transcript()
-
-        if CellConfig.debug_mode:
-            self.logger.debug(f'Executing RNA for cell at ({self.x}, {self.y})')
-        # 移动
+        self.check_death()
+        if self.dead:
+            return
         self.do_RNA()
-        
-        if CellConfig.debug_mode:
-            self.logger.debug(f'Checking death for cell at ({self.x}, {self.y})')
         self.check_death()
         
     
