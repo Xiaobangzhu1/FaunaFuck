@@ -72,7 +72,7 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
 
     base_rate = CellConfig.mutation_rate 
     
-    if random.random() > base_rate:
+    if base_rate <= 0.0 or n == 0:
         return gene_DNA, False
     # 流水线：选断点 → 切分 → 复制 → 打乱 → 反转 → 连接
     break_points = _pick_break_points(n, float(base_rate))

@@ -24,9 +24,9 @@ class Cell():
         self.y = y
         self.channel = 0
         self.gene_DNA = gene_DNA
-        self.gene_RNA = []
+        self.gene_RNA: List[str] = []  # RNA 序列
+        self.transcript()
         
-        self.age = 0
         self.ribosome = 0
 
         self.NTs = NTs
@@ -64,39 +64,32 @@ class Cell():
     
     def transcript(self):
         '''基因转录
-        d + [ ! ?
+        A T C G
+        
+        AA = d; AT = a; AC = w; AG = s
+        TA = +; TT = -; TC = ,; TG = .
+        CA = [; CT = ]; CC = >; CG = <
+        GA = start/pause; GT = stop; GC = rep
+        
         !d = a;  ?d = w ;  !?d = ?!d = s
         !+ = -;  ?+ = , ;  !?+ = ?!+ = .
         ![ = ];  ?[ = > ;  !?[ = ?![ = <
         !!/?? ： pause
-        将所有括号与终止符'!!'相配对。
-        '['  转录为 '[int'，如果所在格子葡萄糖数量小于等于[阈值，跳转到int。其中int为相应'!!'的位置
-            相应地，'!!'转录为 ']int'，如果所在格子葡萄糖数量大于[阈值，跳转到int，其中int为相应'['的位置
-            
-        '!['  转录为 ']int'，如果所在格子葡萄糖数量大于[阈值，跳转到int。其中int为相应'!!'的位置
-            相应地，'!!'转录为 '[int'，如果所在格子葡萄糖数量小于等于[阈值，跳转到int，其中int为相应'!]'的位置
-            
-        '{'  转录为 '{int'，如果自身能量小于等于{阈值，跳转到int。其中int为相应'!!'的位置
-            相应地，'!!'转录为 '}int'，如果自身能量大于{阈值，跳转到int，其中int为相应'['的位置
-            
-        '!{'  转录为 '}int'，如果自身能量大于{阈值，跳转到int。其中int为相应'!!'的位置
-            相应地，'!!'转录为 '{int'，如果自身能量小于等于{阈值，跳转到int，其中int为相应'['的位置
         '''
-        if self.transcripted_flag is True:
-            return 
-        
-
         
         def _cut_DNAs(DNA : str) -> List[str]:
             '''将基因序列切割为片段'''
             s = DNA
             tokens = []
             base_set = ['d', '+', '[']
+            stop_set = ['??']
             duo_set = ['!d', '?d', '!+','?+','![', '?[', '!!', '??']
             tri_set = ['!?d', '?!d', '!?+', '?!+', '!?[', '?![']
             fraction = []
             i = 0
             while i < len(DNA):
+                if i + 2 <= len(s) and s[i:i+2] in stop_set:
+                    break
                 # 三字符
                 if i + 3 <= len(s) and s[i:i+3] in tri_set:
                     tokens.append(s[i:i+3])
@@ -123,7 +116,7 @@ class Cell():
                 'd' : 'd', '!d' : 'a', '?d' : 'w', '!?d' : 's', '?!d' : 's',
                 '+' : '+', '!+' : '-', '?+' : ',', '!?+' : '.', '?!+' : '.',
                 '[' : '[', '![' : ']', '?[' : '>', '!?[' : '<', '?![' : '<',
-                '!!' : 'p', '??' : 'p'
+                '!!' : 'p'
             }
             translated_RNA = [translate_dict[token] for token in cutted_DNA if token in translate_dict]
             return translated_RNA
@@ -175,7 +168,6 @@ class Cell():
         DNA = self.gene_DNA
         RNA = _process(DNA)
         self.gene_RNA = RNA
-        self.transcripted_flag = True
     
     def move(self,direction: str):
         '''细胞移动一步'''

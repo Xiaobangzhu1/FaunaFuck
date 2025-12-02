@@ -50,8 +50,8 @@ class World:
         if len(sorted_rnas) > 20:
             lines.append(f"... 还有 {len(sorted_rnas) - 20} 种RNA未显示")
         
-        output = '\n'.join(lines)
-        self.logger.info(f"\n{output}")
+        output_rna = '\n'.join(lines)
+        return output_rna
 
     def collect_DNAs(self):
         """收集并统计所有不同的DNA序列"""
@@ -72,8 +72,8 @@ class World:
         if len(sorted_dnas) > 20:
             lines.append(f"... 还有 {len(sorted_dnas) - 20} 种DNA未显示")
         
-        output = '\n'.join(lines)
-        self.logger.info(f"\n{output}")
+        output_dna = '\n'.join(lines)
+        return output_dna
 
     def add_new_cells(self) -> None:
         """将新生成的细胞添加到世界中"""
@@ -123,8 +123,10 @@ class World:
         self.draw_tick()
 
         if self.ticks % 100 == 0:
-            self.collect_RNAs()
-            self.collect_DNAs()
+            output_dna = self.collect_DNAs()
+            output_rna = self.collect_RNAs()
+            output = f"=== 当前帧数: {self.ticks} ===\n{output_dna}\n{output_rna}"
+            self.logger.info(output)
         if len(self.cells) == 0:
             self.logger.info("All cells are dead. Game Over.")
             return False

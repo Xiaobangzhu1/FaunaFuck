@@ -3,6 +3,7 @@ from logging.handlers import TimedRotatingFileHandler
 from typing import Optional
 from pathlib import Path
 from datetime import datetime
+from shutil import copy2
 
 from config import LogConfig
 
@@ -49,6 +50,16 @@ def setup_logging(name: str = "fauna") -> logging.Logger:
             return _namer
 
         fh.namer = _make_rotated_namer(log_path)
+
+        # 仅复制快照，不移动/删除原始 log，确保 tail 不中断
+        def _rotator(source: str, dest: str) -> None:
+            try:
+                copy2(source, dest)
+            except Exception:
+                # 安静失败，避免影响主程序
+                pass
+        fh.rotator = _rotator
+
         fmt = logging.Formatter(
             fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
