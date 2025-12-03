@@ -12,6 +12,10 @@ from config import CellConfig
 import logging
 from drawer import draw_cell as drawer_draw_cell
 
+#TODO：优化细胞类的速度
+    #TODO：减少属性访问次数
+    #TODO：减少方法调用次数
+    #TODO：减少转录次数
 if TYPE_CHECKING:
     from world import World
 
@@ -212,19 +216,19 @@ class Cell():
             ch = int(self.channel) & 0xFF
             x = int(self.x)
             y = int(self.y)
-            self.NTs.map[x, y, ch] = min(255, self.NTs.map[x, y, ch] + 1)
+            current = int(self.NTs.map[x, y, ch])
+            self.NTs.map[x, y, ch] = min(255, current + 1)
         elif command == '-':
             ch = int(self.channel) & 0xFF
             x = int(self.x)
             y = int(self.y)
-            self.NTs.map[x, y, ch] = max(0, self.NTs.map[x, y, ch] - 1)
+            current = int(self.NTs.map[x, y, ch])
+            self.NTs.map[x, y, ch] = max(0, current - 1)
     
     def reproduce(self) -> None:
         '''细胞自我复制'''
         from DNA_mutation_rules import mutate_DNA
         child_DNA, mutated = mutate_DNA(self.gene_DNA)
-        if mutated:
-            self.logger.info(f'Cell mutated during reproduction. New DNA: {child_DNA}')
         x = self.x
         y = self.y
         directions = [(1,0), (-1,0), (0,1), (0,-1)]

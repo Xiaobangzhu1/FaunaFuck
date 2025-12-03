@@ -28,12 +28,25 @@ class CellConfig:
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False  # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
-    mutation_rate : float = 0.001 # 突变率
     long_gene_encourage : bool = False  # 长基因鼓励因子
     randomize_reproduction_direction : bool = True  # 繁殖时随机选择方向
     surroundings = 4
     
     ribosome_loop : bool = False  # 核糖体到达末端后循环回起点
+    # 各种变异发生的概率
+    
+    base_muatation_rate : float = 1e-6  # 基础碱基突变概率
+    gene_mutation_rate : float = 1e-8  # 基础突变概率
+    mutation_rate : float = 1e-3  # 基础突变概率
+    add_rate : float = 1e-2  # 在此基础上片段添加概率
+    drop_rate : float = 1e-2  # 在此基础上片段删除概率
+    duplicate_rate : float = 1e-2  # 在此基础上片段复制概率
+    shuffle_rate : float = 1e-2  # 在此基础上片段洗混概率
+    invert_in_shuffle : bool = True  # 在此基础上片段洗混时是否反转
+    
+    
+    
+    
     
     replant : bool = False #
     replant_DNAs : list[str] = []
