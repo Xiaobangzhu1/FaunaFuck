@@ -7,8 +7,8 @@ from pathlib import Path
 class MapConfig:
     '''地图大小'''
     
-    width : int = 50
-    height : int = 50
+    width : int = 100
+    height : int = 100
     channels : int = 256  # 神经递质通道数
     
     max_instructions : int = 1000  # 每个细胞每帧最大执行指令数
@@ -17,13 +17,13 @@ class DispConfig:
     '''显示设置'''
     
     fps : int = 60
-    scale : int = 16  # 窗口显示放大倍数（地图与细胞等比例放大）
+    scale : int = 4  # 窗口显示放大倍数（地图与细胞等比例放大）
     
     
 class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
-    die_mode : int = 3
+    die_mode : int = 2
     gene_DNA : str = '+[?+!['  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False  # 纯净模式，仅生成一个细胞
@@ -35,14 +35,9 @@ class CellConfig:
     ribosome_loop : bool = False  # 核糖体到达末端后循环回起点
     # 各种变异发生的概率
     
-    base_muatation_rate : float = 1e-6  # 基础碱基突变概率
-    gene_mutation_rate : float = 1e-8  # 基础突变概率
-    mutation_rate : float = 1e-3  # 基础突变概率
-    add_rate : float = 1e-2  # 在此基础上片段添加概率
-    drop_rate : float = 1e-2  # 在此基础上片段删除概率
-    duplicate_rate : float = 1e-2  # 在此基础上片段复制概率
-    shuffle_rate : float = 1e-2  # 在此基础上片段洗混概率
-    invert_in_shuffle : bool = True  # 在此基础上片段洗混时是否反转
+    base_muatation_rate : float = 1e-3  # 基础碱基突变概率
+    gene_mutation_rate : float = 1e-4  # 基础基因突变概率
+
     
     
     

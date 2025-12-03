@@ -56,17 +56,16 @@ def _duplicate_segment(segments: list[str]) -> list[str]:
     segments = _drop_segment(segments)
     return segments
 
-def _shuffle_segments(segments: list[str], invert: bool) -> list[str]:
+def _shuffle_segments(segments: list[str]) -> list[str]:
     """打乱片段顺序，可能反转某些片段"""
     if not segments:
         return segments
     segments = segments[:]  # 复制一份
     random.shuffle(segments)
-    if invert:
-        # 随机反转某些片段
-        for i in range(len(segments)):
-            if random.random() < 0.5:
-                segments[i] = segments[i][::-1]
+    # 随机反转某些片段
+    for i in range(len(segments)):
+        if random.random() < 0.5:
+            segments[i] = segments[i][::-1]
     return segments
 
 def _join_segments_with_connectors(segments: list[str]) -> str:
@@ -100,12 +99,6 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
 
     base_muatation_rate = CellConfig.base_muatation_rate
     gene_mutation_rate = CellConfig.gene_mutation_rate
-    mutation_rate = CellConfig.mutation_rate
-    add_rate = CellConfig.add_rate
-    drop_rate = CellConfig.drop_rate
-    duplicate_rate = CellConfig.duplicate_rate
-    shuffle_rate = CellConfig.shuffle_rate
-    invert_in_shuffle = CellConfig.invert_in_shuffle
     # 根据基因长度调整突变概率（越长越容易突变）
 
     # 流水线：选断点 → 切分 → 复制 → 打乱 → 反转 → 连接
@@ -126,13 +119,13 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
         index = random.randrange(n)
         method = random.choice([_add_base, _drop_base, _substitute_base])
         gene_DNA = method(gene_DNA, index)
-    
-    if _possible(gene_mutation_rate):
-        segments = _break_to_segments(gene_DNA, mutation_rate)
-        segments = _duplicate_segment(segments)
-        segments = _shuffle_segments(segments, invert_in_shuffle)
-        mutated_DNA = _join_segments_with_connectors(segments)
-        mutated = True
+
+    segments = _break_to_segments(gene_DNA, gene_mutation_rate)
+    if len(segments) == 1:
+        return gene_DNA, False  # 无法切分，返回原序列
+    segments = _duplicate_segment(segments)
+    segments = _shuffle_segments(segments)
+    mutated_DNA = _join_segments_with_connectors(segments)
+    mutated = True
         
-    
     return mutated_DNA, mutated
