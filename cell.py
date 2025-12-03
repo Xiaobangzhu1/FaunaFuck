@@ -85,102 +85,10 @@ class Cell():
         ![ = ];  ?[ = > ;  !?[ = ?![ = <
         !!/?? ： pause
         '''
+        from DNA_processing import transcript_DNA_to_RNA 
 
-        def _cut_DNAs(DNA : str) -> List[str]:
-            '''将基因序列切割为片段'''
-            s = DNA
-            tokens = []
-            base_set = ['d', '+', '[']
-            stop_set = ['??']
-            duo_set = ['!d', '?d', '!+','?+','![', '?[', '!!', '??']
-            tri_set = ['!?d', '?!d', '!?+', '?!+', '!?[', '?![']
-            fraction = []
-            i = 0
-            while i < len(DNA):
-                if i + 2 <= len(s) and s[i:i+2] in stop_set:
-                    break
-                # 三字符
-                if i + 3 <= len(s) and s[i:i+3] in tri_set:
-                    tokens.append(s[i:i+3])
-                    i += 3
-                    continue
-                # 两字符
-                if i + 2 <= len(s) and s[i:i+2] in duo_set:
-                    tokens.append(s[i:i+2])
-                    i += 2
-                    continue
-                # 单字符
-                if s[i] in base_set:
-                    tokens.append(s[i])
-                    i += 1
-                    continue
-                # 噪声跳过
-                i += 1
-
-            return tokens
-                
-        def _translate_cutted_DNA(cutted_DNA: List[str]) -> List[str]:
-            '''将切割后的DNA转录为RNA'''
-            translate_dict = {
-                'd' : 'd', '!d' : 'a', '?d' : 'w', '!?d' : 's', '?!d' : 's',
-                '+' : '+', '!+' : '-', '?+' : ',', '!?+' : '.', '?!+' : '.',
-                '[' : '[', '![' : ']', '?[' : '>', '!?[' : '<', '?![' : '<',
-                '!!' : 'p'
-            }
-            translated_RNA = [translate_dict[token] for token in cutted_DNA if token in translate_dict]
-            return translated_RNA
-
-        def _match_RNA(translated_RNA: List[str]) -> List[str]:
-            '''为括号添加跳转位置，丢弃没有配对的括号'''
-            stack = []
-            matched_indices = set()  # 记录成功配对的索引
-            
-            # 第一遍：找出所有配对的括号
-            for i, command in enumerate(translated_RNA):
-                if command == '[':
-                    stack.append(i)
-                elif command == ']':
-                    if len(stack) > 0:
-                        j = stack.pop()
-                        matched_indices.add(i)
-                        matched_indices.add(j)
-            
-            # 第二遍：构建结果，只保留配对的括号和非括号命令
-            result = []
-            index_map = {}  # 旧索引到新索引的映射
-            
-            for i, command in enumerate(translated_RNA):
-                if command in ['[', ']']:
-                    if i in matched_indices:
-                        index_map[i] = len(result)
-                        result.append(command)
-                else:
-                    result.append(command)
-            
-            # 第三遍：为配对的括号添加跳转位置
-            stack = []
-            for i, command in enumerate(result):
-                if command == '[':
-                    stack.append(i)
-                elif command == ']':
-                    if len(stack) > 0:
-                        j = stack.pop()
-                        result[j] = f'[{i}'
-                        result[i] = f']{j}'
-            
-            return result
-
-        def _process(DNA: str) -> List[str]:
-            RNA = _cut_DNAs(DNA)
-            RNA = _translate_cutted_DNA(RNA)
-            RNA = _match_RNA(RNA)
-
-            return RNA
-            
-        if self.transcripted_flag:
-            return
         DNA = self.gene_DNA
-        RNA = _process(DNA)
+        RNA = transcript_DNA_to_RNA(DNA)
         self.gene_RNA = RNA
         if CellConfig.debug_mode:
             self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) transcribed DNA to RNA: {self.gene_RNA}')
@@ -227,7 +135,7 @@ class Cell():
     
     def reproduce(self) -> None:
         '''细胞自我复制'''
-        from DNA_mutation_rules import mutate_DNA
+        from DNA_processing import mutate_DNA
         child_DNA, mutated = mutate_DNA(self.gene_DNA)
         x = self.x
         y = self.y
