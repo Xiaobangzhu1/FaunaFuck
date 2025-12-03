@@ -46,8 +46,11 @@ def main():
         pygame.display.flip()
     
     # 收集DNA
-    world.collect_DNAs()
+    DNAs = world.collect_DNAs()
+    # 输出数量最多的前20种DNA
+    print(DNAs)
     # 收集RNA
-    world.collect_RNAs()
+    RNAs = world.collect_RNAs()
+    print(RNAs)
 if __name__ == '__main__':
     main()

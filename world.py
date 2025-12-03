@@ -27,6 +27,7 @@ class World:
         self.NTs = NTs.initialize_NTs()
         self.cells = Cell.initialize_cells(self.NTs, self)
         self.new_cells = []  # 用于存储新生成的细胞
+        self.pending_positions: set[tuple[int,int]] = set()  # 本帧预占位置
         self.ticks = 0
         
     def collect_RNAs(self):
@@ -34,7 +35,7 @@ class World:
         rna_counts = {}
         for cell in self.cells:
             if not cell.dead:
-                rna_str = ''.join(cell.gene_RNA)
+                rna_str = ' | '.join(cell.gene_RNA)
                 rna_counts[rna_str] = rna_counts.get(rna_str, 0) + 1
         
         # 按数量排序，最多的在前
@@ -76,20 +77,38 @@ class World:
         return output_dna
 
     def add_new_cells(self) -> None:
-        """将新生成的细胞添加到世界中"""
+        """将新生成的细胞添加到世界中，并清理预占位"""
         for cell in self.new_cells:
             self.cells.append(cell)
-        self.new_cells.clear()  # 清空新细胞列表
+        self.new_cells.clear()
+        self.pending_positions.clear()
+        
+    def begin_frame(self) -> None:
+        """开始一帧：清空预占位"""
+        self.pending_positions.clear()
+        
+    def reserve_position(self, x: int, y: int) -> bool:
+        """尝试预占 (x,y)，避免同一帧重复落子"""
+        ix = int(x); iy = int(y)
+        if self.cells_map[ix, iy]:
+            return False
+        if (ix, iy) in self.pending_positions:
+            return False
+        self.pending_positions.add((ix, iy))
+        return True
 
     def cells_act(self)-> None:
         """让所有细胞执行动作"""
-        prints = []
-        self.update_cells_map()  # 先更新地图
-        self.add_new_cells()  # 添加新细胞
-        for cell in self.cells:
+        self.begin_frame()
+        self.update_cells_map()  # 用于当前帧占用检查
+        for cell in list(self.cells):
             cell.act()
             self.check_dead(cell)
               
+        # 一帧结束后统一加入新细胞，并刷新占用图
+        self.add_new_cells()
+        self.update_cells_map()
+        
     def check_dead(self, cell) -> None:
         '''检查细胞是否死亡'''
         if cell.dead is True:           
@@ -132,4 +151,3 @@ class World:
             return False
         
         return True
-    
