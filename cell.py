@@ -168,6 +168,8 @@ class Cell():
         DNA = self.gene_DNA
         RNA = _process(DNA)
         self.gene_RNA = RNA
+        if CellConfig.debug_mode:
+            self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) transcribed DNA to RNA: {self.gene_RNA}')
     
     def move(self,direction: str):
         '''细胞移动一步'''
@@ -215,20 +217,19 @@ class Cell():
             self.logger.info(f'Cell mutated during reproduction. New DNA: {child_DNA}')
         x = self.x
         y = self.y
-        # 尝试在附近生成新细胞
         directions = [(1,0), (-1,0), (0,1), (0,-1)]
         if CellConfig.randomize_reproduction_direction:
             random.shuffle(directions)
         for dx, dy in directions:
-            new_x = x + dx
-            new_y = y + dy
-            new_x = (new_x + MapConfig.width) % MapConfig.width
-            new_y = (new_y + MapConfig.height) % MapConfig.height
-            if not self.world.cells_map[int(new_x), int(new_y)]:
-                # 位置空闲，生成新细胞
+            new_x = (x + dx + MapConfig.width) % MapConfig.width
+            new_y = (y + dy + MapConfig.height) % MapConfig.height
+            # 同帧预占位，避免重复落子
+            if self.world.reserve_position(int(new_x), int(new_y)):
                 child_cell = Cell(new_x, new_y, child_DNA, self.NTs, world=self.world)
-                self.world.new_cells.append(child_cell)  # 取消注释并根据需要修改
-                break  # 成功复制后退出
+                child_cell.channel = self.channel
+                child_cell.locked = True  # 新细胞无敌一回合
+                self.world.new_cells.append(child_cell)
+                break
         return
         
         
@@ -236,6 +237,8 @@ class Cell():
     def die(self, reason: str) -> None:
         if not self.locked:
             self.dead = True
+        if CellConfig.debug_mode:
+            self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) died. Reason: {reason}')
 
     def jump_forward(self, command: str) -> None:
         """'[' 指令: 若当前 (x,y) 的当前 channel 值为 0 则跳转, 否则 ribosome+1"""
@@ -272,7 +275,8 @@ class Cell():
     def move_ribosome(self) -> None:
         self.ribosome += 1
         if self.ribosome >= len(self.gene_RNA):
-            self.ribosome = 0
+            if CellConfig.ribosome_loop:
+                self.ribosome = 0
     
     def do_RNA(self) -> None:
         '''执行RNA指令
@@ -332,6 +336,8 @@ class Cell():
             raise Exception('Max instructions exceeded')
                 
         except Exception as e:
+            if CellConfig.debug_mode:
+                raise e
             self.die(f'Error: {e}')
             self.gene_DNA = str(e)
       

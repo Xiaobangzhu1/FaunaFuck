@@ -7,8 +7,8 @@ from pathlib import Path
 class MapConfig:
     '''地图大小'''
     
-    width : int = 800
-    height : int = 800
+    width : int = 50
+    height : int = 50
     channels : int = 256  # 神经递质通道数
     
     max_instructions : int = 1000  # 每个细胞每帧最大执行指令数
@@ -17,28 +17,35 @@ class DispConfig:
     '''显示设置'''
     
     fps : int = 60
-    scale : int = 1  # 窗口显示放大倍数（地图与细胞等比例放大）
+    scale : int = 16  # 窗口显示放大倍数（地图与细胞等比例放大）
     
     
 class CellConfig:
     '''细胞配置'''
-    debug_mode : bool = False  # 是否开启调试模式
-    die_mode : int = 3 # 4:上下左右四个细胞
-                       # 8:上下左右四个细胞加上四个对角线细胞
-    gene_DNA : str = '?+?????????????????????????????????????????????????'  # 初始基因序列
+    debug_mode : bool = False # 是否开启调试模式
+    die_mode : int = 3
+    gene_DNA : str = '+[?+!['  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
-    pure_mode : bool = True  # 纯净模式，仅生成一个细胞
+    pure_mode : bool = False  # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
     mutation_rate : float = 0.001 # 突变率
+    long_gene_encourage : bool = False  # 长基因鼓励因子
     randomize_reproduction_direction : bool = True  # 繁殖时随机选择方向
-    surroundings = 24
+    surroundings = 4
+    
+    ribosome_loop : bool = False  # 核糖体到达末端后循环回起点
+    
+    replant : bool = False #
+    replant_DNAs : list[str] = []
+    
+    
 class LogConfig:
     """日志设置"""
     enable: bool = True
-    level: str = "DEBUG"  # 可选: DEBUG/INFO/WARNING/ERROR
+    level: str = "INFO"  # 建议 INFO 或 WARNING，减少磁盘写入
     file: str = "logs/fauna.log"  # 日志文件存放在 logs 文件夹
     rotate_max_bytes: int = 2_000_000  # ~2MB
-    rotate_backup_count: int = 4
+    rotate_backup_count: int = 1 # 保留多少个轮转备份
     # 分钟级日志快照（基于时间的轮转）
     snapshot_minutes: int = 1           # 每隔多少分钟轮转一次
     snapshot_backup_count: int = 2    # 最多保留多少个快照（例如保留近2小时）
