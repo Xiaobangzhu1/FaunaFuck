@@ -4,7 +4,15 @@ from typing import List, Tuple
 from config import CellConfig, MapConfig
 import numpy as np
 
-DNA_BASES = ['d', '+', '[', '!', '?']
+global MODE 
+MODE = 2  # 转录模式选择
+if MODE == 1:
+    DNA_BASES = ['d', '+', '[', '!', '?']
+if MODE == 2:
+    DNA_BASES = ['!', '?', '>', '<']
+
+global TEST
+TEST = False
 
 global mutated 
 mutated = False
@@ -130,54 +138,143 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
     mutated = True
     return mutated_DNA, mutated
 
-def transcript_DNA_to_RNA(gene_DNA: str) -> List[str]:
+def transcript_DNA_to_RNA(gene_DNA: str, MODE = 2) -> List[str]:
     '''将DNA转录为RNA'''
-    # 简单起见，RNA序列与DNA序列相同
-    def _cut_DNAs(DNA : str) -> List[str]:
-            '''将基因序列切割为片段'''
-            s = DNA
-            tokens = []
-            base_set = ['d', '+', '[']
-            stop_set = ['??']
-            duo_set = ['!d', '?d', '!+','?+','![', '?[', '!!', '??']
-            tri_set = ['!?d', '?!d', '!?+', '?!+', '!?[', '?![']
-            fraction = []
+    
+    if MODE == 1:
+        # 简单起见，RNA序列与DNA序列相同
+        def _cut_DNAs(DNA : str) -> List[str]:
+                '''将基因序列切割为片段'''
+                s = DNA
+                tokens = []
+                base_set = ['d', '+', '[']
+                stop_set = ['??']
+                duo_set = ['!d', '?d', '!+','?+','![', '?[', '!!', '??']
+                tri_set = ['!?d', '?!d', '!?+', '?!+', '!?[', '?![']
+                fraction = []
+                i = 0
+                while i < len(DNA):
+                    if i + 2 <= len(s) and s[i:i+2] in stop_set:
+                        break
+                    # 三字符
+                    if i + 3 <= len(s) and s[i:i+3] in tri_set:
+                        tokens.append(s[i:i+3])
+                        i += 3
+                        continue
+                    # 两字符
+                    if i + 2 <= len(s) and s[i:i+2] in duo_set:
+                        tokens.append(s[i:i+2])
+                        i += 2
+                        continue
+                    # 单字符
+                    if s[i] in base_set:
+                        tokens.append(s[i])
+                        i += 1
+                        continue
+                    # 噪声跳过
+                    i += 1
+
+                return tokens
+                    
+        def _translate_cutted_DNA(cutted_DNA: List[str]) -> List[str]:
+                '''将切割后的DNA转录为RNA'''
+                translate_dict = {
+                    'd' : 'd', '!d' : 'a', '?d' : 'w', '!?d' : 's', '?!d' : 's',
+                    '+' : '+', '!+' : '-', '?+' : ',', '!?+' : '.', '?!+' : '.',
+                    '[' : '[', '![' : ']', '?[' : '>', '!?[' : '<', '?![' : '<',
+                    '!!' : 'p'
+                }
+                translated_RNA = [translate_dict[token] for token in cutted_DNA if token in translate_dict]
+                return translated_RNA
+
+        def _match_RNA(translated_RNA: List[str]) -> List[str]:
+                '''为括号添加跳转位置，丢弃没有配对的括号'''
+                stack = []
+                matched_indices = set()  # 记录成功配对的索引
+                
+                # 第一遍：找出所有配对的括号
+                for i, command in enumerate(translated_RNA):
+                    if command == '[':
+                        stack.append(i)
+                    elif command == ']':
+                        if len(stack) > 0:
+                            j = stack.pop()
+                            matched_indices.add(i)
+                            matched_indices.add(j)
+                
+                # 第二遍：构建结果，只保留配对的括号和非括号命令
+                result = []
+                index_map = {}  # 旧索引到新索引的映射
+                
+                for i, command in enumerate(translated_RNA):
+                    if command in ['[', ']']:
+                        if i in matched_indices:
+                            index_map[i] = len(result)
+                            result.append(command)
+                    else:
+                        result.append(command)
+                
+                # 第三遍：为配对的括号添加跳转位置
+                stack = []
+                for i, command in enumerate(result):
+                    if command == '[':
+                        stack.append(i)
+                    elif command == ']':
+                        if len(stack) > 0:
+                            j = stack.pop()
+                            result[j] = f'[{i}'
+                            result[i] = f']{j}'
+                
+                return result
+            
+        RNA = _cut_DNAs(gene_DNA)
+        RNA = _translate_cutted_DNA(RNA)
+        RNA = _match_RNA(RNA)
+        return RNA
+
+    elif MODE == 2:
+        '''基因转录
+        !! = +; !? = ,; !> = d; !< = a
+        ?! = .; ?? = -; ?> = w; ?< = s
+        >! = [; >? = }; >> = >; >< = e
+        <! = ]; <? = {; << = <; <> = b
+        
+        b for begin
+        e for end
+        d for down
+            '''
+        def _cut_DNAs(DNA : str) -> List[str]:
+            '''将两个碱基切割为片段'''
+            RNA_list = []
             i = 0
-            while i < len(DNA):
-                if i + 2 <= len(s) and s[i:i+2] in stop_set:
-                    break
-                # 三字符
-                if i + 3 <= len(s) and s[i:i+3] in tri_set:
-                    tokens.append(s[i:i+3])
-                    i += 3
-                    continue
-                # 两字符
-                if i + 2 <= len(s) and s[i:i+2] in duo_set:
-                    tokens.append(s[i:i+2])
+            transcript_switch = False
+            while i < len(DNA) - 1:
+                bases = DNA[i] + DNA[i + 1]
+                if bases == '<>':
+                    transcript_switch = True
                     i += 2
                     continue
-                # 单字符
-                if s[i] in base_set:
-                    tokens.append(s[i])
-                    i += 1
+                if not transcript_switch:
+                    i += 2
                     continue
-                # 噪声跳过
-                i += 1
-
-            return tokens
-                
-    def _translate_cutted_DNA(cutted_DNA: List[str]) -> List[str]:
+                if bases == '><':
+                    break
+                RNA_list.append(bases)
+                i += 2
+            return RNA_list
+        
+        def _translate_cutted_DNA(cutted_DNA: List[str]) -> List[str]:
             '''将切割后的DNA转录为RNA'''
             translate_dict = {
-                'd' : 'd', '!d' : 'a', '?d' : 'w', '!?d' : 's', '?!d' : 's',
-                '+' : '+', '!+' : '-', '?+' : ',', '!?+' : '.', '?!+' : '.',
-                '[' : '[', '![' : ']', '?[' : '>', '!?[' : '<', '?![' : '<',
-                '!!' : 'p'
+                '!!' : '+', '!?': ',', '!>': 'd', '!<': 'a',
+                '?!' : '.', '??': '-', '?>': 'w', '?<': 's',
+                '>!' : '[', '>?' : '}', '>>' : '>', '><' : 'e',
+                '<!' : ']', '<?' : '{', '<<' : '<', '<>' : 'b',
             }
             translated_RNA = [translate_dict[token] for token in cutted_DNA if token in translate_dict]
             return translated_RNA
-
-    def _match_RNA(translated_RNA: List[str]) -> List[str]:
+        
+        def _match_RNA(translated_RNA: List[str]) -> List[str]:
             '''为括号添加跳转位置，丢弃没有配对的括号'''
             stack = []
             matched_indices = set()  # 记录成功配对的索引
@@ -216,10 +313,27 @@ def transcript_DNA_to_RNA(gene_DNA: str) -> List[str]:
                         result[i] = f']{j}'
             
             return result
-
-
-    RNA = _cut_DNAs(gene_DNA)
-    RNA = _translate_cutted_DNA(RNA)
-    RNA = _match_RNA(RNA)
-    return RNA
+         
+        RNA = _cut_DNAs(gene_DNA)
+        if TEST:
+            print(f"Cutted DNA: {RNA}")
+        RNA = _translate_cutted_DNA(RNA)
+        if TEST:
+            print(f"Translated RNA: {RNA}")
+        RNA = _match_RNA(RNA)
+        if TEST:
+            print(f"Matched RNA: {RNA}")
+        return RNA
         
+    else:
+        raise Exception('Unsupported transcription mode') 
+
+if __name__ == "__main__":
+    # 测试基因突变和转录
+    TEST = True
+    test_DNA = '!?<>?!??!+><!<<>?>!!'
+    print(f"Original DNA: {test_DNA}")
+    mutated_DNA, is_mutated = mutate_DNA(test_DNA)
+    print(f"Mutated DNA: {mutated_DNA} (Mutated: {is_mutated})")
+    RNA = transcript_DNA_to_RNA(mutated_DNA)
+    print(f"Transcribed RNA: {RNA}")

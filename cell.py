@@ -150,11 +150,6 @@ class Cell():
                 child_cell = Cell(new_x, new_y, child_DNA, self.NTs, world=self.world)
                 child_cell.channel = self.channel
                 child_cell.locked = True  # 新细胞无敌一回合
-                if mutated :
-                    child_cell.transcripted_flag = False
-                else:
-                    child_cell.transcripted_flag = True
-                    child_cell.gene_RNA = self.gene_RNA.copy()
                 self.world.new_cells.append(child_cell)
                 break
         return
@@ -199,11 +194,16 @@ class Cell():
         elif command == '<':
             self.channel = (self.channel - 1) % MapConfig.channels
             
-    def move_ribosome(self) -> None:
-        self.ribosome += 1
-        if self.ribosome >= len(self.gene_RNA):
-            if CellConfig.ribosome_loop:
+    def move_ribosome(self, position: str = 'forward') -> None:
+        if position == 'forward':
+            self.ribosome += 1
+        elif position == 'backward':
+            self.ribosome -= 1
+        if CellConfig.ribosome_loop:
+            if self.ribosome >= len(self.gene_RNA):
                 self.ribosome = 0
+            elif self.ribosome < 0:
+                self.ribosome = len(self.gene_RNA) - 1
     
     def do_RNA(self) -> None:
         '''执行RNA指令
@@ -256,7 +256,7 @@ class Cell():
                 elif command in ['>', '<']:
                     self.change_channel(command)
                     
-                elif command == 'p':
+                elif command in ['{', '}']:
                     self.move_ribosome()
                     return
                     

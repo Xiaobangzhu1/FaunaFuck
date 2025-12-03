@@ -24,7 +24,7 @@ class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
     die_mode : int = 2
-    gene_DNA : str = '+[?+!['  # 初始基因序列
+    gene_DNA : str = '<>!?!?!?!?'  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False  # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
@@ -46,7 +46,7 @@ class CellConfig:
     replant : bool = False #
     replant_DNAs : list[str] = []
     
-    cell_subculture : list[tuple[str, int]]|None = [('+[?+![???', 20),('?[+[?+?![?![!+?[?[![', 2)]  # 亚培养细胞列表，格式为 [(DNA序列, 数量), ...]
+    cell_subculture : list[tuple[str, int]]|None = None  # 亚培养细胞列表，格式为 [(DNA序列, 数量), ...]
     cell_subculture_survive_rate : float = 1  # 亚培养细胞存活率
     
     
