@@ -25,6 +25,7 @@ class Cell():
         self.channel = 0
         self.gene_DNA = gene_DNA
         self.gene_RNA: List[str] = []  # RNA 序列
+        self.transcripted_flag = False
         self.transcript()
         
         self.ribosome = 0
@@ -33,7 +34,6 @@ class Cell():
         self.world = world
         self.dead = False
         
-        self.transcripted_flag = False
         
     
     @classmethod
@@ -41,6 +41,17 @@ class Cell():
         '''初始化细胞'''
         cells = []
         num = CellConfig.original_num
+        if CellConfig.cell_subculture:
+            for gene_DNA, count in CellConfig.cell_subculture:
+                count = int(count * CellConfig.cell_subculture_survive_rate)
+                for _ in range(count):
+                    rawx = random.normalvariate(MapConfig.width / 2, MapConfig.width / 8)
+                    x = min(max(0, int(rawx)), MapConfig.width)
+                    rawy = random.normalvariate(MapConfig.height / 2, MapConfig.height / 8)
+                    y = min(max(0, int(rawy)), MapConfig.height) 
+                    cell = Cell(x, y, gene_DNA, NTs, world=world)
+                    cells.append(cell)
+            return cells
         if CellConfig.pure_mode:
             num = 1
             x = MapConfig.width // 2
@@ -64,19 +75,13 @@ class Cell():
     
     def transcript(self):
         '''基因转录
-        A T C G
-        
-        AA = d; AT = a; AC = w; AG = s
-        TA = +; TT = -; TC = ,; TG = .
-        CA = [; CT = ]; CC = >; CG = <
-        GA = start/pause; GT = stop; GC = rep
-        
+
         !d = a;  ?d = w ;  !?d = ?!d = s
         !+ = -;  ?+ = , ;  !?+ = ?!+ = .
         ![ = ];  ?[ = > ;  !?[ = ?![ = <
         !!/?? ： pause
         '''
-        
+
         def _cut_DNAs(DNA : str) -> List[str]:
             '''将基因序列切割为片段'''
             s = DNA
@@ -120,51 +125,56 @@ class Cell():
             }
             translated_RNA = [translate_dict[token] for token in cutted_DNA if token in translate_dict]
             return translated_RNA
-        
-        def _first_clean_RNA(translated_RNA: List[str]) -> List[str]:
-            '''清理.（死亡）之后的RNA序列'''
-            cleaned_RNA = []
-            for command in translated_RNA:
-                cleaned_RNA.append(command)
-                if command == '.':
-                    break
-            return cleaned_RNA
-        
+
         def _match_RNA(translated_RNA: List[str]) -> List[str]:
-            '''为括号添加跳转位置'''
+            '''为括号添加跳转位置，丢弃没有配对的括号'''
             stack = []
-            matched_RNA = translated_RNA.copy()
+            matched_indices = set()  # 记录成功配对的索引
+            
+            # 第一遍：找出所有配对的括号
             for i, command in enumerate(translated_RNA):
                 if command == '[':
                     stack.append(i)
                 elif command == ']':
-                    if len(stack) == 0:
-                        continue
-                    j = stack.pop()
-                    matched_RNA[j] = f'[{i}'
-                    matched_RNA[i] = f']{j}'
-            return matched_RNA
-        
-        def _second_clean_RNA(matched_RNA: List[str]) -> List[str]:
-            '''清理RNA序列，去除无效的[]指令和无效命令'''
-            valid_commands = {'d', 'a', 'w', 's', '+', '-', ',', '.', 'p'}
-            cleaned_RNA = []
-            for command in matched_RNA:
-                if command.startswith('[') or command.startswith(']'):
-                    if command[1:].isdigit():
-                        cleaned_RNA.append(command)
-                elif command in valid_commands:
-                    cleaned_RNA.append(command)
-            return cleaned_RNA
-        
+                    if len(stack) > 0:
+                        j = stack.pop()
+                        matched_indices.add(i)
+                        matched_indices.add(j)
+            
+            # 第二遍：构建结果，只保留配对的括号和非括号命令
+            result = []
+            index_map = {}  # 旧索引到新索引的映射
+            
+            for i, command in enumerate(translated_RNA):
+                if command in ['[', ']']:
+                    if i in matched_indices:
+                        index_map[i] = len(result)
+                        result.append(command)
+                else:
+                    result.append(command)
+            
+            # 第三遍：为配对的括号添加跳转位置
+            stack = []
+            for i, command in enumerate(result):
+                if command == '[':
+                    stack.append(i)
+                elif command == ']':
+                    if len(stack) > 0:
+                        j = stack.pop()
+                        result[j] = f'[{i}'
+                        result[i] = f']{j}'
+            
+            return result
+
         def _process(DNA: str) -> List[str]:
-            cutted_DNA = _cut_DNAs(DNA)
-            translated_RNA = _translate_cutted_DNA(cutted_DNA)
-            first_cleaned_RNA = _first_clean_RNA(translated_RNA)
-            matched_RNA = _match_RNA(first_cleaned_RNA)
-            cleaned_RNA = _second_clean_RNA(matched_RNA)
-            return cleaned_RNA
-        
+            RNA = _cut_DNAs(DNA)
+            RNA = _translate_cutted_DNA(RNA)
+            RNA = _match_RNA(RNA)
+
+            return RNA
+            
+        if self.transcripted_flag:
+            return
         DNA = self.gene_DNA
         RNA = _process(DNA)
         self.gene_RNA = RNA
@@ -228,6 +238,11 @@ class Cell():
                 child_cell = Cell(new_x, new_y, child_DNA, self.NTs, world=self.world)
                 child_cell.channel = self.channel
                 child_cell.locked = True  # 新细胞无敌一回合
+                if mutated :
+                    child_cell.transcripted_flag = False
+                else:
+                    child_cell.transcripted_flag = True
+                    child_cell.gene_RNA = self.gene_RNA.copy()
                 self.world.new_cells.append(child_cell)
                 break
         return

@@ -54,16 +54,22 @@ class World:
         output_rna = '\n'.join(lines)
         return output_rna
 
-    def collect_DNAs(self):
+    def collect_DNAs(self, statistics: bool = True) -> str | list:
+        #TODO:分离非统计的DNA收集功能
         """收集并统计所有不同的DNA序列"""
         dna_counts = {}
         for cell in self.cells:
             if not cell.dead:
                 dna_counts[cell.gene_DNA] = dna_counts.get(cell.gene_DNA, 0) + 1
-        
+
         # 按数量排序，最多的在前
-        sorted_dnas = sorted(dna_counts.items(), key=lambda x: x[1], reverse=True)
-        
+        sorted_dnas = sorted(dna_counts.items(), key=lambda x: x[1], reverse=True) 
+        if not statistics:
+            if type(sorted_dnas) == dict and len(sorted_dnas) == 0:
+                return "No living cells."
+            output = sorted_dnas
+            return list(output)
+    
         # 格式化输出：序号、数量、长度、DNA（截断长序列）
         lines = [f"=== 收集到 {len(sorted_dnas)} 种不同的DNA，共 {len([c for c in self.cells if not c.dead])} 个细胞 ==="]
         for i, (dna, count) in enumerate(sorted_dnas[:20], 1):  # 只显示前20种

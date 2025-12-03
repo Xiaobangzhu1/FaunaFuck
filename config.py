@@ -38,6 +38,9 @@ class CellConfig:
     replant : bool = False #
     replant_DNAs : list[str] = []
     
+    cell_subculture : list[tuple[str, int]]|None = [('+[?+![???', 20),('?[+[?+?![?![!+?[?[![', 2)]  # 亚培养细胞列表，格式为 [(DNA序列, 数量), ...]
+    cell_subculture_survive_rate : float = 1  # 亚培养细胞存活率
+    
     
 class LogConfig:
     """日志设置"""
