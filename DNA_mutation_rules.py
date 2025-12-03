@@ -74,8 +74,12 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
     
     if base_rate <= 0.0 or n == 0:
         return gene_DNA, False
+    if CellConfig.long_gene_encourage:
+        probability = base_rate / n 
+    else:
+        probability = base_rate
     # 流水线：选断点 → 切分 → 复制 → 打乱 → 反转 → 连接
-    break_points = _pick_break_points(n, float(base_rate))
+    break_points = _pick_break_points(n, float(probability))
     segments = _split_by_points(gene_DNA, break_points)
     segments = _duplicate_random_segment(segments)
     segments = _drop_segment(segments)
