@@ -10,6 +10,7 @@ from cell import Cell
 import numpy as np
 from config import *
 from drawer import draw_tick as drawer_draw_tick, render_frame
+import os
 
 
 class World:
@@ -35,7 +36,9 @@ class World:
         rna_counts = {}
         for cell in self.cells:
             if not cell.dead:
-                rna_str = ' | '.join(cell.gene_RNA)
+                raw_RNA = cell.gene_RNA
+                RNA = [r[0] for r in raw_RNA if r != '']  # 去除空指令
+                rna_str = ''.join(RNA)
                 rna_counts[rna_str] = rna_counts.get(rna_str, 0) + 1
         
         # 按数量排序，最多的在前
@@ -45,6 +48,7 @@ class World:
         lines = [f"=== 收集到 {len(sorted_rnas)} 种不同的RNA，共 {len([c for c in self.cells if not c.dead])} 个细胞 ==="]
         for i, (rna, count) in enumerate(sorted_rnas[:20], 1):  # 只显示前20种
             # 将RNA按指令分组显示，更易读
+            # 将每个RNA用|分隔，每10个字符换行
             display_rna = rna if len(rna) <= 40 else rna[:37] + "..."
             lines.append(f"#{i:2d} | x{count:4d} | len={len(rna):3d} | {display_rna}")
         
@@ -54,7 +58,7 @@ class World:
         output_rna = '\n'.join(lines)
         return output_rna
 
-    def collect_DNAs(self, statistics: bool = True) -> str | list:
+    def collect_DNAs(self) -> str | list:
         #TODO:分离非统计的DNA收集功能
         """收集并统计所有不同的DNA序列"""
         dna_counts = {}
@@ -64,11 +68,6 @@ class World:
 
         # 按数量排序，最多的在前
         sorted_dnas = sorted(dna_counts.items(), key=lambda x: x[1], reverse=True) 
-        if not statistics:
-            if type(sorted_dnas) == dict and len(sorted_dnas) == 0:
-                return "No living cells."
-            output = sorted_dnas
-            return list(output)
     
         # 格式化输出：序号、数量、长度、DNA（截断长序列）
         lines = [f"=== 收集到 {len(sorted_dnas)} 种不同的DNA，共 {len([c for c in self.cells if not c.dead])} 个细胞 ==="]
@@ -81,6 +80,35 @@ class World:
         
         output_dna = '\n'.join(lines)
         return output_dna
+    
+    def save_world_state(self, filename: str) -> None:
+        """保存当前世界状态到文件"""
+        #创建路径
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, 'w') as f:
+            for cell in self.cells:
+                f.write(f"({cell.x}, {cell.y})\n")
+                f.write(f"{cell.gene_DNA}\n")
+                
+        self.logger.info(f"World state saved to {filename}")
+
+    def read_world_state(self, filename: str) -> None:
+        """从文件读取世界状态"""
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        
+        self.cells.clear()
+        i = 0
+        while i < len(lines):
+            pos_line = lines[i].strip()
+            dna_line = lines[i + 1].strip()
+            x, y = eval(pos_line)  # 注意：eval 有安全风险，确保文件可信
+            cell = Cell.create_cell_from_DNA(dna_line, x, y, self.NTs, self)
+            self.cells.append(cell)
+            i += 2
+        #NOTE: 得用连接路径: os
+        self.update_cells_map()
+        self.logger.info(f"World state loaded from {filename}, total cells: {len(self.cells)}")
 
     def add_new_cells(self) -> None:
         """将新生成的细胞添加到世界中，并清理预占位"""
@@ -152,6 +180,11 @@ class World:
             output_rna = self.collect_RNAs()
             output = f"=== 当前帧数: {self.ticks} ===\n{output_dna}\n{output_rna}"
             self.logger.info(output)
+
+        if self.ticks % SaveConfig.autosave_interval == 0 and SaveConfig.autosave_interval > 0:
+            filename = f"{SaveConfig.autosave_dir}/{SaveConfig.autosave_prefix}tick_{self.ticks}.txt"
+            self.save_world_state(filename)
+
         if len(self.cells) == 0:
             self.logger.info("All cells are dead. Game Over.")
             return False

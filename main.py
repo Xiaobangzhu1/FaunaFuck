@@ -30,6 +30,14 @@ def main():
     running = True
     clock = pygame.time.Clock()
     
+    if SaveConfig.read_path:
+        try:
+            world.read_world_state(SaveConfig.read_path)
+        except Exception as e:
+            message = f"Failed to read world state from {SaveConfig.read_path}: {e}"
+            world.logger.error(message)
+            print(message)
+
     while running:
 
         clock.tick(DispConfig.fps)

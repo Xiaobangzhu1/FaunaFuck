@@ -77,6 +77,12 @@ class Cell():
                 cells.append(cell)
             return cells
     
+    @classmethod
+    def create_cell_from_DNA(cls, gene_DNA: str, x: int, y: int, NTs: 'NTs', world: 'World') -> 'Cell':
+        '''通过DNA创建细胞'''
+        cell = Cell(x, y, gene_DNA, NTs, world=world)
+        return cell
+    
     def transcript(self):
         '''基因转录
 
@@ -313,7 +319,6 @@ class Cell():
         self.do_RNA()
         self.check_death()
         
-    
 
     def draw_cell(self, screen: pygame.surface.Surface) -> None:
         '''绘制细胞'''

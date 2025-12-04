@@ -8,3 +8,5 @@ logs/*
 .conda
 
 .github
+
+saves/

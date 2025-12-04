@@ -16,7 +16,7 @@ class MapConfig:
 class DispConfig:
     '''显示设置'''
     
-    fps : int = 60
+    fps : int = 60000000
     scale : int = 4  # 窗口显示放大倍数（地图与细胞等比例放大）
     
     
@@ -24,7 +24,7 @@ class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
     die_mode : int = 2
-    gene_DNA : str = '<>!?!?!?!?'  # 初始基因序列
+    gene_DNA : str = '<>!?!?><'  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False  # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
@@ -49,7 +49,14 @@ class CellConfig:
     cell_subculture : list[tuple[str, int]]|None = None  # 亚培养细胞列表，格式为 [(DNA序列, 数量), ...]
     cell_subculture_survive_rate : float = 1  # 亚培养细胞存活率
     
-    
+class SaveConfig:
+    '''存档设置'''
+    autosave_interval : int = 10000  # 自动保存间隔，单位为 tick，0 表示不自动保存
+    autosave_dir : str = "saves"  # 自动保存文件夹
+    autosave_prefix : str = "autosave_"  # 自动保存文件名前缀
+
+    read_path : str = ""  # 读取存档路径，空字符串表示不读取存档   
+
 class LogConfig:
     """日志设置"""
     enable: bool = True
@@ -58,7 +65,7 @@ class LogConfig:
     rotate_max_bytes: int = 2_000_000  # ~2MB
     rotate_backup_count: int = 1 # 保留多少个轮转备份
     # 分钟级日志快照（基于时间的轮转）
-    snapshot_minutes: int = 1           # 每隔多少分钟轮转一次
+    snapshot_minutes: int = 5           # 每隔多少分钟轮转一次
     snapshot_backup_count: int = 2    # 最多保留多少个快照（例如保留近2小时）
 
 
