@@ -5,7 +5,7 @@ from world import World
 from config import * 
 from logger_setup import setup_logging
 from pathlib import Path
-
+import os
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
     running = True
     clock = pygame.time.Clock()
     
-    if SaveConfig.read_path:
+    if SaveConfig.read and SaveConfig.read_path != "":
         try:
             world.read_world_state(SaveConfig.read_path)
         except Exception as e:
@@ -54,8 +54,8 @@ def main():
         pygame.display.flip()
     
     # 收集DNA和RNA统计
-    DNAs = world.collect_DNAs(statistics=False)
-    world.logger.info(f"\n{DNAs}")
+    filename = os.path.join(SaveConfig.autosave_dir, 'final_stats.txt')
+    world.save_world_state(filename)
 
 if __name__ == '__main__':
     main()

@@ -182,7 +182,7 @@ class World:
             self.logger.info(output)
 
         if self.ticks % SaveConfig.autosave_interval == 0 and SaveConfig.autosave_interval > 0:
-            filename = f"{SaveConfig.autosave_dir}/{SaveConfig.autosave_prefix}tick_{self.ticks}.txt"
+            filename = os.path.join(SaveConfig.autosave_dir,f'{SaveConfig.autosave_prefix}tick_{self.ticks}.txt')
             self.save_world_state(filename)
 
         if len(self.cells) == 0:

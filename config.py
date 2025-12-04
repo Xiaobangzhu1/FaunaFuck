@@ -16,7 +16,7 @@ class MapConfig:
 class DispConfig:
     '''显示设置'''
     
-    fps : int = 60000000
+    fps : int = 60
     scale : int = 4  # 窗口显示放大倍数（地图与细胞等比例放大）
     
     
@@ -51,11 +51,14 @@ class CellConfig:
     
 class SaveConfig:
     '''存档设置'''
+    import os
     autosave_interval : int = 10000  # 自动保存间隔，单位为 tick，0 表示不自动保存
     autosave_dir : str = "saves"  # 自动保存文件夹
     autosave_prefix : str = "autosave_"  # 自动保存文件名前缀
 
-    read_path : str = ""  # 读取存档路径，空字符串表示不读取存档   
+    read = True  # 是否读取存档
+    read_tick = 640000  # 读取存档的指定帧数，0 表示读取最新帧
+    read_path : str =  os.path.join(autosave_dir, f"autosave_tick_{read_tick}.txt")  # 读取存档路径，空字符串表示不读取存档
 
 class LogConfig:
     """日志设置"""

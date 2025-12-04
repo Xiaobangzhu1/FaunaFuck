@@ -14,8 +14,12 @@ class NTs():
 
         
     @classmethod
-    def initialize_NTs(cls) -> 'NTs':
+    def initialize_NTs(cls, map = None) -> 'NTs':
         '''初始化神经递质'''
+        if map is not None:
+            NTs_instance = NTs()
+            NTs_instance.set_map(map)
+            return NTs_instance
         NTs_instance = NTs()
         return NTs_instance
         

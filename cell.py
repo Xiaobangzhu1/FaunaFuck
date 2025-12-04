@@ -178,7 +178,7 @@ class Cell():
         if val == 0:
             self.ribosome = target
         else:
-            self.ribosome += 1
+            self.move_ribosome()
         return
 
     def jump_backward(self, command: str) -> None:
@@ -191,7 +191,7 @@ class Cell():
         if val > 0:
             self.ribosome = target
         else:
-            self.ribosome += 1
+            self.move_ribosome()
         return
     
     def change_channel(self, command: str) -> None:

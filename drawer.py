@@ -25,6 +25,15 @@ def draw_tick(surface: pygame.Surface, tick: int) -> None:
     text = font.render(f'Tick: {tick}', True, (0, 0, 255))
     surface.blit(text, (10, 10))
 
+def draw_NTs_map(surface: pygame.Surface, NTs_map: np.ndarray) -> None:
+    # 将 NTs_map 的值归一化为 0-255 灰度
+    normalized = (np.minimum(255,(NTs_map != 0) * 255)).clip(0, 255).astype(np.uint8).T
+    # 创建单通道红色图像
+    grayscale_image = np.stack([np.zeros_like(normalized), normalized, np.zeros_like(normalized)], axis=-1)  # G通道  # shape = (H, W, 3)
+    # 转换为 Surface
+    surface_NTs = pygame.surfarray.make_surface(grayscale_image.swapaxes(0, 1))  # Pygame 要求 (W, H, 3)
+    surface.blit(surface_NTs, (0, 0))
+
 
 def render_frame(target_surface: pygame.Surface, world) -> None:
     """在基础尺寸画布上渲染整帧，然后按窗口大小缩放到目标 Surface。
