@@ -89,8 +89,13 @@ class World:
             for cell in self.cells:
                 f.write(f"({cell.x}, {cell.y})\n")
                 f.write(f"{cell.gene_DNA}\n")
-                
-        self.logger.info(f"World state saved to {filename}")
+        # 同步保存 NTs 三维矩阵到 .npy
+        nts_filename = filename.replace('.txt', '_NTs.npy')
+        try:
+            np.save(nts_filename, self.NTs.map)
+            self.logger.info(f"World state saved to {filename}; NTs saved to {nts_filename}")
+        except Exception as e:
+            self.logger.error(f"Failed to save NTs to {nts_filename}: {e}")
 
     def read_world_state(self, filename: str) -> None:
         """从文件读取世界状态"""
@@ -106,6 +111,19 @@ class World:
             cell = Cell.create_cell_from_DNA(dna_line, x, y, self.NTs, self)
             self.cells.append(cell)
             i += 2
+        # 读取 NTs 三维矩阵（与快照同名的 *_NTs.npy）
+        nts_filename = filename.replace('.txt', '_NTs.npy')
+        try:
+            nts_map = np.load(nts_filename)
+            self.NTs = NTs.initialize_NTs(map=nts_map)
+            self.logger.info(f"NTs loaded from {nts_filename} (shape={nts_map.shape})")
+        except FileNotFoundError:
+            # 不存在则保持当前 NTs（全零），以兼容老存档
+            self.logger.warning(f"NTs file not found: {nts_filename}, using blank NTs")
+            self.NTs = NTs.initialize_NTs()
+        except Exception as e:
+            self.logger.error(f"Failed to read NTs from {nts_filename}: {e}")
+            self.NTs = NTs.initialize_NTs()
         #NOTE: 得用连接路径: os
         self.update_cells_map()
         self.logger.info(f"World state loaded from {filename}, total cells: {len(self.cells)}")

@@ -244,6 +244,7 @@ class Cell():
                     self.change_number(command)
                     self.move_ribosome()
                     return
+                
                 elif command == ',':
                     self.reproduce()
                     self.move_ribosome()
@@ -261,7 +262,9 @@ class Cell():
                     
                 elif command in ['>', '<']:
                     self.change_channel(command)
-                    
+                    self.move_ribosome()
+                    return
+                
                 elif command in ['{', '}']:
                     self.move_ribosome()
                     return
