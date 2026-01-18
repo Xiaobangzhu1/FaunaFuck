@@ -102,36 +102,44 @@ class Cell():
             self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) transcribed DNA to RNA: {self.gene_RNA}')
     
     def move(self,direction: str) -> bool:
-        '''细胞移动一步，撞墙则停止移动但仍消耗移动次数
+        '''细胞移动一步，撞墙或超出边界则停止移动但仍消耗移动次数
         Returns:
             bool: 是否成功移动到新位置
         '''
         self.lock()
         if direction == 'd' :
-            new_x = self.x + 1
-            new_x = (new_x + MapConfig.width) % MapConfig.width
-            if not self.world.cells_map[int(new_x), int(self.y)]:
+            new_x = int(self.x + 1)
+            # 检查是否超出边界
+            if new_x >= MapConfig.width:
+                return False
+            if not self.world.cells_map[new_x, int(self.y)]:
                 self.x = new_x
                 return True
             return False
         elif direction == 'a':
-            new_x = self.x - 1
-            new_x = (new_x + MapConfig.width) % MapConfig.width
-            if not self.world.cells_map[int(new_x), int(self.y)]:
+            new_x = int(self.x - 1)
+            # 检查是否超出边界
+            if new_x < 0:
+                return False
+            if not self.world.cells_map[new_x, int(self.y)]:
                 self.x = new_x
                 return True
             return False
         elif direction == 'w':
-            new_y = self.y - 1
-            new_y = (new_y + MapConfig.height) % MapConfig.height
-            if not self.world.cells_map[int(self.x), int(new_y)]:
+            new_y = int(self.y - 1)
+            # 检查是否超出边界
+            if new_y < 0:
+                return False
+            if not self.world.cells_map[int(self.x), new_y]:
                 self.y = new_y
                 return True
             return False
         elif direction == 's':
-            new_y = self.y + 1
-            new_y = (new_y + MapConfig.height) % MapConfig.height
-            if not self.world.cells_map[int(self.x), int(new_y)]:
+            new_y = int(self.y + 1)
+            # 检查是否超出边界
+            if new_y >= MapConfig.height:
+                return False
+            if not self.world.cells_map[int(self.x), new_y]:
                 self.y = new_y
                 return True
             return False
