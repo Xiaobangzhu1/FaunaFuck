@@ -78,9 +78,11 @@ class Cell():
             return cells
     
     @classmethod
-    def create_cell_from_DNA(cls, gene_DNA: str, x: int, y: int, NTs: 'NTs', world: 'World') -> 'Cell':
+    def create_cell_from_DNA(cls, gene_DNA: str, x: int, y: int, NTs: 'NTs', world: 'World', ribosome = 0, channel = 0) -> 'Cell':
         '''通过DNA创建细胞'''
         cell = Cell(x, y, gene_DNA, NTs, world=world)
+        cell.ribosome = ribosome
+        cell.channel = channel
         return cell
     
     def transcript(self):

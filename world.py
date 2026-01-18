@@ -46,14 +46,12 @@ class World:
         
         # 格式化输出：序号、数量、长度、RNA（截断长序列）
         lines = [f"=== 收集到 {len(sorted_rnas)} 种不同的RNA，共 {len([c for c in self.cells if not c.dead])} 个细胞 ==="]
-        for i, (rna, count) in enumerate(sorted_rnas[:20], 1):  # 只显示前20种
+        for i, (rna, count) in enumerate(sorted_rnas, 1):  # 只显示前20种
             # 将RNA按指令分组显示，更易读
             # 将每个RNA用|分隔，每10个字符换行
             display_rna = rna if len(rna) <= 40 else rna[:37] + "..."
             lines.append(f"#{i:2d} | x{count:4d} | len={len(rna):3d} | {display_rna}")
         
-        if len(sorted_rnas) > 20:
-            lines.append(f"... 还有 {len(sorted_rnas) - 20} 种RNA未显示")
         
         output_rna = '\n'.join(lines)
         return output_rna
@@ -71,12 +69,13 @@ class World:
     
         # 格式化输出：序号、数量、长度、DNA（截断长序列）
         lines = [f"=== 收集到 {len(sorted_dnas)} 种不同的DNA，共 {len([c for c in self.cells if not c.dead])} 个细胞 ==="]
-        for i, (dna, count) in enumerate(sorted_dnas[:20], 1):  # 只显示前20种
-            display_dna = dna if len(dna) <= 40 else dna[:37] + "..."
+        for i, (dna, count) in enumerate(sorted_dnas, 1):  
+            # 两步加一个空格分隔DNA，更易读
+            dna_parts = [dna[j:j+2] for j in range(0, len(dna), 2)]
+            dna = ' '.join(dna_parts)
+            display_dna = dna 
             lines.append(f"#{i:2d} | x{count:4d} | len={len(dna):3d} | {display_dna}")
         
-        if len(sorted_dnas) > 20:
-            lines.append(f"... 还有 {len(sorted_dnas) - 20} 种DNA未显示")
         
         output_dna = '\n'.join(lines)
         return output_dna
@@ -89,6 +88,8 @@ class World:
             for cell in self.cells:
                 f.write(f"({cell.x}, {cell.y})\n")
                 f.write(f"{cell.gene_DNA}\n")
+                f.write(f"{cell.ribosome}\n")  # 可选：保存核糖体位置以便调试
+                f.write(f"{cell.channel}\n")  # 可选：保存细胞信道状态以便调试
         # 同步保存 NTs 三维矩阵到 .npy
         nts_filename = filename.replace('.txt', '_NTs.npy')
         try:
@@ -104,13 +105,30 @@ class World:
         
         self.cells.clear()
         i = 0
-        while i < len(lines):
-            pos_line = lines[i].strip()
-            dna_line = lines[i + 1].strip()
-            x, y = eval(pos_line)  # 注意：eval 有安全风险，确保文件可信
-            cell = Cell.create_cell_from_DNA(dna_line, x, y, self.NTs, self)
-            self.cells.append(cell)
-            i += 2
+        try:
+            while i < len(lines):
+                pos_line = lines[i].strip()
+                dna_line = lines[i + 1].strip()
+                rbs_line = lines[i + 2].strip()  # 可选：读取核糖体位置
+                channel_line = lines[i + 3].strip()  # 可选：读取细胞信道状态
+                x, y = eval(pos_line)  # 注意：eval 有安全风险，确保文件可信
+                cell = Cell.create_cell_from_DNA(dna_line, x, y, self.NTs, self, ribosome=int(rbs_line), channel=int(channel_line))
+                self.cells.append(cell)
+                i += 4
+        except:
+            try:
+                while i < len(lines):
+                    pos_line = lines[i].strip()
+                    dna_line = lines[i + 1].strip()
+                    rbs_line = lines[i + 2].strip()  # 可选：读取核糖体位置
+                
+                    x, y = eval(pos_line)  # 注意：eval 有安全风险，确保文件可信
+                    cell = Cell.create_cell_from_DNA(dna_line, x, y, self.NTs, self, ribosome=int(rbs_line), channel=0)
+                    self.cells.append(cell)
+                    i += 3
+            except Exception as e:
+                self.logger.error(f"Error reading world state from {filename} at line {i}: {e}")
+                raise e
         # 读取 NTs 三维矩阵（与快照同名的 *_NTs.npy）
         nts_filename = filename.replace('.txt', '_NTs.npy')
         try:

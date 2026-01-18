@@ -23,14 +23,14 @@ class DispConfig:
 class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
-    die_mode : int = 2
+    die_mode : int = 3
     gene_DNA : str = '<>!?!?><'  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
     long_gene_encourage : bool = False  # 长基因鼓励因子
     randomize_reproduction_direction : bool = True  # 繁殖时随机选择方向
-    surroundings = 4
+    surroundings = 8
     
     ribosome_loop : bool = False  # 核糖体到达末端后循环回起点
     # 各种变异发生的概率
@@ -52,12 +52,12 @@ class CellConfig:
 class SaveConfig:
     '''存档设置'''
     import os
-    autosave_interval : int = 1000  # 自动保存间隔，单位为 tick，0 表示不自动保存
+    autosave_interval : int = 5000  # 自动保存间隔，单位为 tick，0 表示不自动保存
     autosave_dir : str = "saves"  # 自动保存文件夹
     autosave_prefix : str = "autosave_"  # 自动保存文件名前缀
 
-    read = False # 是否读取存档
-    read_tick = 0  # 读取存档的指定帧数，0 表示读取最新帧
+    read = 1 # 是否读取存档
+    read_tick = 450000 # 读取存档的指定帧数，0 表示读取最新帧
     read_path : str =  os.path.join(autosave_dir, f"autosave_tick_{read_tick}.txt")  # 读取存档路径，空字符串表示不读取存档
     read_path = os.path.join(autosave_dir,'final_stats.txt') if read_tick == 0 else read_path
 
