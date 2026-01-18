@@ -101,31 +101,41 @@ class Cell():
         if CellConfig.debug_mode:
             self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) transcribed DNA to RNA: {self.gene_RNA}')
     
-    def move(self,direction: str):
-        '''细胞移动一步'''
+    def move(self,direction: str) -> bool:
+        '''细胞移动一步，撞墙则停止移动但仍消耗移动次数
+        Returns:
+            bool: 是否成功移动到新位置
+        '''
         self.lock()
         if direction == 'd' :
-            x = int(self.x)
             new_x = self.x + 1
             new_x = (new_x + MapConfig.width) % MapConfig.width
             if not self.world.cells_map[int(new_x), int(self.y)]:
                 self.x = new_x
+                return True
+            return False
         elif direction == 'a':
-            x = int(self.x)
             new_x = self.x - 1
             new_x = (new_x + MapConfig.width) % MapConfig.width
             if not self.world.cells_map[int(new_x), int(self.y)]:
                 self.x = new_x
+                return True
+            return False
         elif direction == 'w':
             new_y = self.y - 1
             new_y = (new_y + MapConfig.height) % MapConfig.height
             if not self.world.cells_map[int(self.x), int(new_y)]:
                 self.y = new_y
+                return True
+            return False
         elif direction == 's':
             new_y = self.y + 1
             new_y = (new_y + MapConfig.height) % MapConfig.height
             if not self.world.cells_map[int(self.x), int(new_y)]:
                 self.y = new_y
+                return True
+            return False
+        return False
 
     def change_number(self, command: str) -> None:
         if command == '+':
@@ -141,8 +151,11 @@ class Cell():
             current = int(self.NTs.map[x, y, ch])
             self.NTs.map[x, y, ch] = max(0, current - 1)
     
-    def reproduce(self) -> None:
-        '''细胞自我复制'''
+    def reproduce(self) -> bool:
+        '''细胞自我复制，找不到空位则繁殖失败但仍消耗繁殖次数
+        Returns:
+            bool: 是否成功繁殖
+        '''
         from DNA_processing import mutate_DNA
         child_DNA, mutated = mutate_DNA(self.gene_DNA)
         x = self.x
@@ -151,16 +164,19 @@ class Cell():
         if CellConfig.randomize_reproduction_direction:
             random.shuffle(directions)
         for dx, dy in directions:
-            new_x = (x + dx + MapConfig.width) % MapConfig.width
-            new_y = (y + dy + MapConfig.height) % MapConfig.height
+            new_x = int(x + dx)
+            new_y = int(y + dy)
+            # 检查是否在有效范围内（不允许跨越世界边界繁殖）
+            if new_x < 0 or new_x >= MapConfig.width or new_y < 0 or new_y >= MapConfig.height:
+                continue
             # 同帧预占位，避免重复落子
-            if self.world.reserve_position(int(new_x), int(new_y)):
+            if self.world.reserve_position(new_x, new_y):
                 child_cell = Cell(new_x, new_y, child_DNA, self.NTs, world=self.world)
                 child_cell.channel = self.channel
                 child_cell.locked = True  # 新细胞无敌一回合
                 self.world.new_cells.append(child_cell)
-                break
-        return
+                return True
+        return False
         
         
     
