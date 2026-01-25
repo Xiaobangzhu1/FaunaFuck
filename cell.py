@@ -269,7 +269,7 @@ class Cell():
                 elif command in ['+', '-']:
                     self.change_number(command)
                     self.move_ribosome()
-                    return
+                
                 
                 elif command == ',':
                     self.reproduce()

@@ -57,7 +57,7 @@ class SaveConfig:
     autosave_prefix : str = "autosave_"  # 自动保存文件名前缀
 
     read = 1 # 是否读取存档
-    read_tick = 450000 # 读取存档的指定帧数，0 表示读取最新帧
+    read_tick = 0 # 读取存档的指定帧数，0 表示读取最新帧
     read_path : str =  os.path.join(autosave_dir, f"autosave_tick_{read_tick}.txt")  # 读取存档路径，空字符串表示不读取存档
     read_path = os.path.join(autosave_dir,'final_stats.txt') if read_tick == 0 else read_path
 
