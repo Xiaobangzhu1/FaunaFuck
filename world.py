@@ -23,6 +23,7 @@ class World:
          
         self.cells : List[Cell] = []
         self.cells_map = np.zeros((self.width + 1, self.height + 1), dtype=bool)
+        self.marked_cells_map = np.zeros((self.width + 1, self.height + 1), dtype=bool)
         
         # 初始化细胞
         self.NTs = NTs.initialize_NTs()
@@ -156,6 +157,13 @@ class World:
     def begin_frame(self) -> None:
         """开始一帧：清空预占位"""
         self.pending_positions.clear()
+
+    def mark_position(self, x: int, y: int) -> None:
+        """标记一个位置：下一帧若有细胞在此处则死亡"""
+        ix = int(x)
+        iy = int(y)
+        if 0 <= ix <= self.width and 0 <= iy <= self.height:
+            self.marked_cells_map[ix, iy] = True
         
     def reserve_position(self, x: int, y: int) -> bool:
         """尝试预占 (x,y)，避免同一帧重复落子"""
@@ -174,6 +182,7 @@ class World:
         for cell in list(self.cells):
             cell.act()
             self.check_dead(cell)
+        self.marked_cells_map.fill(False)
               
         # 一帧结束后统一加入新细胞，并刷新占用图
         self.add_new_cells()

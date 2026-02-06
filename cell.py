@@ -38,6 +38,11 @@ class Cell():
         self.world = world
         self.dead = False
         
+        self.status = 'born'  # born, alive, dead, moving
+        
+        self.face = None
+        
+        
         
     
     @classmethod
@@ -106,8 +111,9 @@ class Cell():
         Returns:
             bool: 是否成功移动到新位置
         '''
-        self.lock()
+        self.status = 'moving'
         if direction == 'd' :
+            self.face = 'd'
             new_x = int(self.x + 1)
             # 检查是否超出边界
             if new_x >= MapConfig.width:
@@ -117,6 +123,7 @@ class Cell():
                 return True
             return False
         elif direction == 'a':
+            self.face = 'a'
             new_x = int(self.x - 1)
             # 检查是否超出边界
             if new_x < 0:
@@ -126,6 +133,7 @@ class Cell():
                 return True
             return False
         elif direction == 'w':
+            self.face = 'w'
             new_y = int(self.y - 1)
             # 检查是否超出边界
             if new_y < 0:
@@ -135,6 +143,7 @@ class Cell():
                 return True
             return False
         elif direction == 's':
+            self.face = 's'
             new_y = int(self.y + 1)
             # 检查是否超出边界
             if new_y >= MapConfig.height:
@@ -181,7 +190,6 @@ class Cell():
             if self.world.reserve_position(new_x, new_y):
                 child_cell = Cell(new_x, new_y, child_DNA, self.NTs, world=self.world)
                 child_cell.channel = self.channel
-                child_cell.locked = True  # 新细胞无敌一回合
                 self.world.new_cells.append(child_cell)
                 return True
         return False
@@ -189,8 +197,9 @@ class Cell():
         
     
     def die(self, reason: str) -> None:
-        if not self.locked:
+        if self.status == 'alive':
             self.dead = True
+            self.status = 'dead'
         if CellConfig.debug_mode:
             self.logger.info(f'Cell at ({int(self.x)},{int(self.y)}) died. Reason: {reason}')
 
@@ -237,6 +246,22 @@ class Cell():
             elif self.ribosome < 0:
                 self.ribosome = len(self.gene_RNA) - 1
     
+    
+    def kill(self):
+        '''细胞杀死朝向方向的相邻细胞'''
+        directions = {'d': (1,0), 'a': (-1,0), 'w': (0,-1), 's': (0,1)}
+        if self.face not in directions:
+            self.die('Cannot kill: no facing direction set.')
+            return
+        dx, dy = directions[self.face]
+        target_x = int(self.x + dx)
+        target_y = int(self.y + dy)
+        # 检查是否在有效范围内
+        if target_x < 0 or target_x >= MapConfig.width or target_y < 0 or target_y >= MapConfig.height:
+            return
+        # 
+        
+        
     def do_RNA(self) -> None:
         '''执行RNA指令
         Args:
@@ -276,7 +301,7 @@ class Cell():
                     self.move_ribosome()
                     return
                 elif command == '.':
-                    self.die('Executed death command.')
+                    self.kill()
                     self.move_ribosome()
                     return
                     
@@ -303,8 +328,8 @@ class Cell():
             self.die(f'Error: {e}')
             self.gene_DNA = str(e)
       
-    def check_death(self) -> None:
-        """若**所有**相邻格都被占满则死亡"""
+    def check_breath(self) -> None:
+        """若所有相邻格都被占满则死亡"""
         if not hasattr(self, 'world') or self.world is None:
             return
         needed = CellConfig.die_mode
@@ -329,21 +354,33 @@ class Cell():
         if cnt >= needed:
             self.die('Overcrowded death.')
             
+    def check_kill(self) -> None:
+        """检查细胞是否被杀死"""
+        if self.dead:
+            return
+        x = int(self.x)
+        y = int(self.y)
+        if self.world.marked_cells_map[x, y]:
+            self.die('Killed by another cell.')
+            
+            
+    def check_death(self) -> None:
+        """检查细胞是否死亡"""
+        self.check_breath()
+        self.check_kill()
         
-    def lock(self):
-        "进入无敌状态"
-        self.locked = True
+        
         
     def unlock(self):
         "退出无敌状态"
-        self.locked = False
+        self.status = 'alive'
         
     def act(self) -> None:
         '''细胞行为'''
         # 转录
         self.unlock()
-        self.check_death()
-        if self.dead:
+        self.check_breath()
+        if self.status == 'dead':
             return
         self.do_RNA()
         self.check_death()

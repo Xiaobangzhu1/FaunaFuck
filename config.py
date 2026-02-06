@@ -23,7 +23,7 @@ class DispConfig:
 class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
-    die_mode : int = 3
+    die_mode : int = 3 # 身边有多少个细胞时死亡
     gene_DNA : str = '<>!?!?><'  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False # 纯净模式，仅生成一个细胞
@@ -52,8 +52,8 @@ class CellConfig:
 class SaveConfig:
     '''存档设置'''
     import os
-    autosave_interval : int = 5000  # 自动保存间隔，单位为 tick，0 表示不自动保存
-    autosave_dir : str = "saves"  # 自动保存文件夹
+    autosave_interval : int = 10000  # 自动保存间隔，单位为 tick，0 表示不自动保存
+    autosave_dir : str = "/Users/cataster/Desktop/项目：FaunaFuck/saves"  # 自动保存文件夹
     autosave_prefix : str = "autosave_"  # 自动保存文件名前缀
 
     read = 1 # 是否读取存档
