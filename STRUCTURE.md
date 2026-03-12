@@ -1,0 +1,86 @@
+# FaunaFuck 仓库结构说明
+
+## 顶层文件
+- `AGENTS.md`: Codex 协作指令与流程约定。
+- `STRUCTURE.md`: 当前文件，说明各文件夹与文件用途。
+- `.gitignore`: Git 忽略规则。
+- `.DS_Store`: macOS Finder 元数据（可忽略）。
+- `requirements.txt`: Python 依赖列表。
+
+## 顶层文件夹
+- `.github/`: GitHub 配置。
+  - `copilot-instructions.md`: Copilot 指令与协作约定。
+- `archives/`: 历史打包与归档文件。
+  - `saves.zip`: 旧存档打包。
+- `data/`: 数据输入/样例。
+  - `expdata1203.zip`: 实验数据包。
+- `docs/`: 项目文档。
+  - `PRD.md`: 产品需求文档。
+  - `DNA_RULES.md`: DNA 转录规则文档（MODE2-only）。
+  - `IMPLEMENTATION_PLAN.md`: 实施计划。
+  - `FRONTEND_GUIDELINES.md`: 前端/展示规范。
+  - `lessons.md`: 报错原因与解决方案记录。
+  - `TODO.md`: 待办事项。
+  - `progress.txt`: 进度记录。
+- `fauna/`: 核心代码包。
+  - `__init__.py`: 包标识。
+  - `cli.py`: 主入口（带图形界面）。
+  - `app.py`: 运行时封装（同主循环）。
+  - `control_panel.py`: 游戏内交互控制面板（投放、改规则、帧控制）。
+  - `config.py`: 全局配置。
+  - `world.py`: 世界状态与主更新流程。
+  - `cell.py`: 细胞数据与行为入口。
+  - `nts.py`: 神经递质矩阵（NTs）。
+  - `dna_processing.py`: DNA 转录与突变。
+  - `world_persistence.py`: 世界存档读写。
+  - `rendering.py`: 渲染调度。
+  - `drawer.py`: 低层绘制函数。
+  - `logging_setup.py`: 日志初始化与轮转。
+  - `regression_targets.py`: 回归基线数据。
+  - `simulation/`: 模拟子模块。
+    - `__init__.py`: 包标识。
+    - `cell_actions.py`: 细胞动作规则。
+    - `cell_factory.py`: 细胞生成与转录流程。
+    - `headless_runner.py`: 无头回归运行器。
+    - `rna_executor.py`: RNA 指令执行器。
+    - `world_runner.py`: 世界帧调度与存档逻辑。
+    - `world_stats.py`: 统计采集与摘要。
+- `logs/`: 运行日志输出目录。
+- `notebooks/`: 研究/实验用笔记本。
+  - `gene_editing_tools.ipynb`: 基因编辑工具实验。
+- `saves/`: 运行存档输出目录。
+- `tests/`: 测试用例。
+  - `test_regression_targets.py`: seed=42 回归测试。
+- `tools/`: 辅助分析与可视化脚本。
+  - `animation_generator.py`: 日志动画生成核心。
+  - `make_animation.py`: 一键生成动画入口。
+  - `log_analyzer.py`: 日志分析与报告。
+- `__pycache__/`: Python 字节码缓存（可忽略）。
+- `.pytest_cache/`: Pytest 缓存（可忽略）。
+- `simulation/`: 旧目录残留缓存（仅 `__pycache__`，可忽略）。
+
+## 主要重命名/迁移映射
+- `main.py` -> `fauna/cli.py`
+- `app_runtime.py` -> `fauna/app.py`
+- `config.py` -> `fauna/config.py`
+- `world.py` -> `fauna/world.py`
+- `cell.py` -> `fauna/cell.py`
+- `NTs.py` -> `fauna/nts.py`
+- `DNA_processing.py` -> `fauna/dna_processing.py`
+- `io_world_persistence.py` -> `fauna/world_persistence.py`
+- `rendering_runtime.py` -> `fauna/rendering.py`
+- `drawer.py` -> `fauna/drawer.py`
+- `logger_setup.py` -> `fauna/logging_setup.py`
+- `regression_targets.py` -> `fauna/regression_targets.py`
+- `simulation/` -> `fauna/simulation/`
+- `animation_generator.py` -> `tools/animation_generator.py`
+- `make_animation.py` -> `tools/make_animation.py`
+- `log_analyzer.py` -> `tools/log_analyzer.py`
+- `gene_editing_tools.ipynb` -> `notebooks/gene_editing_tools.ipynb`
+- `PRD.md` -> `docs/PRD.md`
+- `IMPLEMENTATION_PLAN.md` -> `docs/IMPLEMENTATION_PLAN.md`
+- `FRONTEND_GUIDELINES.md` -> `docs/FRONTEND_GUIDELINES.md`
+- `lessons.md` -> `docs/lessons.md`
+- `TODO.md` -> `docs/TODO.md`
+- `progress.txt` -> `docs/progress.txt`
+- `saves.zip` -> `archives/saves.zip`

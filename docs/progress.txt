@@ -1,0 +1,427 @@
+# FaunaFuck 进度记录
+
+## 2026-03-11 14:30
+- 任务: 回滚到 0125 from PC 版本
+- 完成: git checkout c404071 -- . 并清理多余文件
+- 保留: .github/copilot-instructions.md
+
+## 2026-03-11 14:35
+- 任务: 生成项目文档
+- 完成: 创建 PRD.md, IMPLEMENTATION_PLAN.md, FRONTEND_GUIDELINES.md
+
+## 2026-03-11 14:40
+- 任务: 添加随机种子支持 (seed=42)
+- 完成: 
+  - config.py: 新增 RandomConfig 类和 set_global_seed() 函数
+  - main.py: 启动时调用 set_global_seed(RandomConfig.seed)
+  - PRD.md: 更新配置参数文档
+- 问题: 未按流程先更新文档等待确认
+- 解决: 补齐 progress.txt 和 lessons.md
+
+## 2026-03-11 23:30
+- 任务: 以高内聚低耦合原则重构项目，并保持 seed=42 行为基线不变
+- 完成:
+  - 从日志提取并固化 100/200/300/400/500/600 帧目标值
+  - 新增 simulation 模块，拆分 cell_factory、cell_actions、rna_executor、world_runner、world_stats、headless_runner
+  - 新增 app_runtime.py、io_world_persistence.py、rendering_runtime.py，收缩 main.py、world.py、cell.py 职责
+  - 新增 regression_targets.py 和 tests/test_regression_targets.py 用于无头回归校验
+- 问题:
+  - 直接运行回归脚本时，工作区模块路径未自动加入 `PYTHONPATH`
+- 解决:
+  - 在回归命令中显式设置 `PYTHONPATH=/Users/cataster/Desktop/项目：FaunaFuck`
+  - 使用 `SDL_VIDEODRIVER=dummy` 执行无头回归和 pytest 验证
+- 验证:
+  - 100=753
+  - 200=1372
+  - 300=1290
+  - 400=1552
+  - 500=1582
+  - 600=1676
+
+## 2026-03-11 23:52
+- 任务: 目录与文件命名整理 + 结构说明
+- 完成:
+  - 新建 `fauna/` 包并迁移核心代码，统一模块命名
+  - 迁移 `simulation/` 子模块至 `fauna/simulation/`
+  - 迁移工具脚本、文档、笔记本与归档文件到清晰目录
+  - 更新全部 Python 导入路径
+  - 新增 `STRUCTURE.md` 说明仓库结构
+- 问题: 未执行测试，仅做导入与路径更新
+- 解决: 保持行为不变，后续可按需运行回归与 pytest
+
+## 2026-03-12 10:43
+- 任务: 统一文档规则并清理过期文档
+- 完成:
+  - 统一 `AGENTS.md` 中的确认规则为“只有 `【直接】` 可直接实现”
+  - 统一文档路径为 `docs/...`
+  - 更新 `docs/PRD.md` 中 `cli` 启动验收口径
+  - 更新 `docs/IMPLEMENTATION_PLAN.md` 的追加式维护说明与任务项
+  - 删除过期的 `docs/TECHNICAL_SPECIFICATION.md`
+  - 更新 `STRUCTURE.md` 中的文档清单
+- 问题: `docs/progress.txt` 中保留了旧阶段的历史路径描述
+- 解决: 作为历史记录保留，不作为当前规则口径
+
+## 2026-03-12 10:45
+- 任务: 提升文档可读性
+- 完成:
+  - 删除 `AGENTS.md` 中固定输出“用户您好”的要求
+  - 重组 `AGENTS.md` 的章节结构，提升扫读性
+  - 在 `docs/PRD.md` 中补充文档整理目标、错误处理和验收标准
+  - 在 `docs/IMPLEMENTATION_PLAN.md` 中追加文档整理任务项
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 11:08
+- 任务: 新增空生态箱交互界面与运行时规则控制
+- 完成:
+  - 新增 `fauna/control_panel.py`，提供游戏内命令面板与状态显示
+  - 启动改为默认空生态箱并禁用读档（`app.run` 中强制 `SaveConfig.read=0`）
+  - 支持批量投放细胞：`spawn dna=... x=... y=... count=... channel=... ribosome=... x_step=... y_step=...`
+  - 支持游戏内修改配置：`set ClassName.attr=value`
+  - 支持暂停/前进一帧/后退一帧（空格/左右键、F5/F6/F7、命令式控制）
+  - 新增世界快照历史机制，实现帧回退与前进
+  - 所有控制操作写入 `logs/fauna.log`，并支持 `export-log` 触发刷新
+  - `cli` 入口统一委托到 `app.run`，避免双循环分叉
+- 问题:
+  - 直接运行 `pytest` 时未自动带项目路径，导致 `fauna` 导入失败
+- 解决:
+  - 使用 `PYTHONPATH=.` 执行测试
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+  - `SDL_VIDEODRIVER=dummy PYTHONPATH=. python3 -m fauna.cli` 可进入主循环（手动中断）
+
+## 2026-03-12 11:10
+- 任务: 增加 Git 协作约定
+- 完成:
+  - 在 `AGENTS.md` 增加“每次更新后可上传 Git，提交说明使用中文”
+  - 在 `docs/PRD.md` 追加 Git 协作目标与验收标准
+  - 在 `docs/IMPLEMENTATION_PLAN.md` 追加对应任务项
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 11:15
+- 任务: 固定窗口双栏布局（左地图右交互）
+- 完成:
+  - 将运行窗口固定为 `1000x500`（宽x高）
+  - 左侧 `500x500` 渲染主地图，右侧 `500x500` 渲染交互面板
+  - 交互面板绘制范围限制在右侧区域，避免覆盖地图
+- 问题:
+  - 无头运行验证需手动中断，进程以 `KeyboardInterrupt` 退出
+- 解决:
+  - 使用 `SDL_VIDEODRIVER=dummy PYTHONPATH=. python3 -m fauna.cli` 进行可启动性验证并手动中断
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+
+## 2026-03-12 11:21
+- 任务: 优化右侧交互区说明和长文本显示
+- 完成:
+  - 右侧面板新增更清晰的快捷键与命令示例说明
+  - 右侧输入行与消息区支持自动换行
+  - 移除右侧状态中的 tick 展示，仅保留细胞数/暂停状态等信息
+- 问题: 无
+- 解决: 无
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+
+## 2026-03-12 11:29
+- 任务: 输入光标 + 暂停热键修复 + 收敛 IMPLEMENTATION_PLAN
+- 完成:
+  - 输入框新增闪烁光标显示
+  - 修复右侧面板显示时空格暂停失效（输入为空时优先触发暂停）
+  - 在 `docs/lessons.md` 记录该问题与修复策略
+  - 完成并勾选 `docs/IMPLEMENTATION_PLAN.md` 中所有剩余未完成项
+- 问题: 无
+- 解决: 无
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+  - `SDL_VIDEODRIVER=dummy PYTHONPATH=. python3 -m fauna.cli` 可进入主循环（手动中断）
+  - `SDL_VIDEODRIVER=dummy ./cli` 可进入主循环（手动中断）
+  - `PATH=\"$PWD:$PATH\" SDL_VIDEODRIVER=dummy cli` 可进入主循环（手动中断）
+
+## 2026-03-12 11:39
+- 任务: 增加 restart 功能
+- 完成:
+  - 在 `World` 增加 `restart_world()`，可重置为空生态箱并清空历史快照
+  - 右侧交互区新增 `restart/reset` 命令
+  - 新增 `F8` 快捷键触发 restart
+  - `help` 与面板说明加入 restart 用法
+  - restart 操作写入日志，失败时返回错误信息并记日志
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 11:44
+- 任务: 支持仅输入 `spawn` 时使用默认细胞配置
+- 完成:
+  - `fauna/control_panel.py` 新增空参数 `spawn` 分支，默认生成中心点单细胞（DNA 使用 `CellConfig.gene_DNA`）
+  - `help` 命令补充 `spawn` 默认配置提示
+  - 同步小幅更新 `docs/PRD.md` 与 `docs/IMPLEMENTATION_PLAN.md`
+- 问题: 无
+- 解决: 无
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+  - `PYTHONPATH=. python3 - <<'PY' ... p._execute_command(w, 'spawn') ... PY` 验证通过（成功生成默认细胞）
+
+## 2026-03-12 11:46
+- 任务: 补充 STU 同步约定
+- 完成:
+  - 在 `AGENTS.md` 增加“结构变更必须同步更新 `STRUCTURE.md`（STU）”规则
+  - 在 `AGENTS.md` 增加文档简称约定：`IPP` / `STU`
+  - 同步小幅更新 `docs/PRD.md` 与 `docs/IMPLEMENTATION_PLAN.md`
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 11:49
+- 任务: 增加“状态颜色 + 启动默认暂停”需求文档
+- 完成:
+  - 在 `docs/PRD.md` 追加“细胞状态颜色由用户指定”与“启动默认暂停”目标及验收项
+  - 在 `docs/IMPLEMENTATION_PLAN.md` 追加对应实现与验证任务（待确认后执行）
+- 问题:
+  - 颜色方案尚未确认，状态分类边界需用户指定
+- 解决:
+  - 进入待确认阶段，先收集颜色映射后再编码
+
+## 2026-03-12 11:50
+- 任务: 细化“零假设”命令级需求
+- 完成:
+  - 在 `docs/PRD.md` 追加命令协议细粒度要求（含 `pause` 输入协议）
+  - 在 `docs/PRD.md` 追加 DNA 规则弹窗目标、错误处理与验收项
+  - 在 `docs/IMPLEMENTATION_PLAN.md` 追加“先确认命令协议再实现”的任务
+- 问题:
+  - `pause` 的最终命令集合、优先级、DNA 弹窗触发命令尚未确认
+- 解决:
+  - 向用户发起逐项确认，确认后再进入代码实现
+
+## 2026-03-12 14:02
+- 任务: 实现交互命令与可视化规则完善计划
+- 完成:
+  - `fauna/control_panel.py` 新增 `dna` 命令与游戏内非模态 DNA 规则浮窗（自适应大小，支持 `ESC` 和右上角按钮关闭）
+  - 快捷键优先级调整为“仅输入框为空时触发”（`SPACE/F5/F6/F7/F8/LEFT/RIGHT`）
+  - `fauna/cell.py` + `fauna/simulation/world_runner.py` 增加细胞年龄计数 `age_ticks`
+  - `fauna/drawer.py` 实现颜色规则：空 RNA 红色覆盖；其余细胞按年龄指数变深（亮绿 `#7CFF6B` 到深绿 `#1E5F24`，半衰期 60 tick）
+  - `fauna/world.py` 启动默认暂停，`restart` 默认保持暂停
+  - `fauna/world_persistence.py` 扩展存档格式，支持持久化 `age_ticks` 并兼容旧格式读取
+  - `docs/PRD.md`、`docs/IMPLEMENTATION_PLAN.md`、`docs/FRONTEND_GUIDELINES.md` 同步实现口径
+  - 删除 `docs/转录规则.txt`，并同步更新 `STRUCTURE.md`
+- 问题:
+  - macOS 下运行 pygame 自检脚本时出现系统级 connection invalid 提示
+- 解决:
+  - 该提示不影响 Python 进程与功能验证，保留为环境噪音日志
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过
+  - `PYTHONPATH=. python3 - <<'PY' ... ControlPanel/World 行为自检 ... PY` 验证通过（启动默认暂停、`dna` 打开浮窗、空输入快捷键优先、restart 后暂停）
+
+## 2026-03-12 14:11
+- 任务: 统一项目 UI 色系为 Forest Console
+- 完成:
+  - 在 `fauna/config.py` 新增 `UITheme` 主题常量（背景、文字、强调、状态色）
+  - `fauna/app.py`、`fauna/rendering.py`、`fauna/control_panel.py`、`fauna/drawer.py` 改为使用统一主题色，移除主要硬编码颜色
+  - `docs/PRD.md`、`docs/IMPLEMENTATION_PLAN.md`、`docs/FRONTEND_GUIDELINES.md` 同步主题规则与色表
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:21
+- 任务: 调整 tick 位置与细胞加深节奏
+- 完成:
+  - `fauna/app.py` 将 `tick` 移到地图上方独立条（左侧 500x30），地图渲染区域改为下方子表面
+  - `tick` 文字改为主题信息色（`UITheme.state_info`），不再覆盖地图内容
+  - `fauna/world.py` 增加 `draw_tick_on_map` 参数，支持关闭地图内 tick 绘制
+  - `fauna/drawer.py` 将非空 RNA 细胞颜色算法改为“每 1 tick 加深 1 次”（直到最深色）
+  - `docs/FRONTEND_GUIDELINES.md`、`docs/IMPLEMENTATION_PLAN.md` 同步新规则并勾选任务
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:25
+- 任务: 修正规则触发词，避免被普通“确认”误触发
+- 完成:
+  - `AGENTS.md` 新增严格匹配规则：仅 `【确认】`、`【直接】` 作为触发词，普通“确认/直接”不触发
+  - `AGENTS.md` 交互约定补充“未带方括号的确认不生效”
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:28
+- 任务: 新增“方向属性 + 箭头显示 + 颜色可见性增强”需求入档
+- 完成:
+  - `docs/PRD.md` 追加细胞方向属性规则（`w/a/s/d`、初始无方向、移动后更新）与箭头显示规则
+  - `docs/PRD.md` 追加颜色变化“更明显可感知”需求与对应验收项
+  - `docs/IMPLEMENTATION_PLAN.md` 追加未勾选实现任务（数据层、移动逻辑、渲染层、验证）
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:32
+- 任务: 转录规则切换为 MODE2-only 并补齐 DNA 文档入口需求
+- 完成:
+  - `docs/PRD.md` 更新为仅支持 `MODE == 2`，标记 `MODE == 1` 废弃
+  - 新增 `docs/DNA_RULES.md`，写入 MODE2 转录映射与打开/关闭方式
+  - `docs/IMPLEMENTATION_PLAN.md` 追加 MODE2-only 与“DNA 文档快捷键/按钮”实现任务
+  - `docs/FRONTEND_GUIDELINES.md` 同步 DNA 浮窗新增快捷键/按钮入口
+  - `STRUCTURE.md` 同步新增文档文件
+- 问题:
+  - DNA 浮窗快捷键键位尚未指定
+- 解决:
+  - 先在文档中标记“待确认后固化”，待用户给出键位后再实现代码
+
+## 2026-03-12 14:38
+- 任务: 固化 DNA 浮窗快捷键为 `/` 并完成 MODE2-only 实现
+- 完成:
+  - `docs/PRD.md`、`docs/DNA_RULES.md`、`docs/FRONTEND_GUIDELINES.md` 将 DNA 浮窗独立快捷键固定为 `/`
+  - `fauna/dna_processing.py` 移除 `MODE == 1` 转录分支，仅保留 `MODE == 2` 映射并对非 2 模式抛错（兼容旧 `MODE=2` 关键字调用）
+  - `fauna/control_panel.py` 新增 DNA 弹窗统一打开入口（命令、快捷键 `/`、右侧按钮）并更新弹窗文案为 MODE2
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选本次实现与验证任务
+- 问题:
+  - 无头环境自检会输出 pygame 社区欢迎语，不影响验证结果
+- 解决:
+  - 保留为环境信息，使用断言验证关键行为
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. SDL_VIDEODRIVER=dummy python3 - <<'PY' ...` 验证 `/` 快捷键与按钮点击均可打开 DNA 弹窗，`ESC` 可关闭
+
+## 2026-03-12 14:43
+- 任务: 修复 `spawn dna=...` 缺省参数报错需求入档
+- 完成:
+  - `docs/PRD.md` 追加 `spawn dna=...` 缺省参数规则（未传 `x/y` 等时使用默认值）
+  - `docs/IMPLEMENTATION_PLAN.md` 追加对应实现与回归验证任务
+- 问题:
+  - 当前实现将 `x/y` 当作必填，`spawn dna=<>!?><` 会触发 `KeyError('x')`
+- 解决:
+  - 先完成文档入档，待用户授权后修改代码为可选参数回落默认值
+
+## 2026-03-12 14:48
+- 任务: 追加“3档颜色 + 控制台回退/复制粘贴”需求入档
+- 完成:
+  - `docs/PRD.md` 明确细胞颜色 3 档离散规则（`1 tick`/`2 tick`/`3 tick+`）及 `0 tick` 显示策略
+  - `docs/PRD.md` 追加控制台 `undo`、`copy`、`paste` 指令与 `Ctrl/Cmd + C/V` 快捷键要求
+  - `docs/IMPLEMENTATION_PLAN.md` 追加对应实现、错误处理与回归验证任务
+  - `docs/FRONTEND_GUIDELINES.md` 同步颜色分档与控制台输入增强规范
+- 问题:
+  - “回退指令”语义可能与已有 `back`（帧回退）混淆
+- 解决:
+  - 文档明确：`back` 仍是帧回退；`undo` 仅用于控制台输入/命令回填，不改变世界状态
+
+## 2026-03-12 14:49
+- 任务: 追加“DNA 弹窗可拖动”需求入档
+- 完成:
+  - `docs/PRD.md` 追加 DNA 浮窗拖动需求（左键按住标题栏）与验收项
+  - `docs/IMPLEMENTATION_PLAN.md` 追加拖拽实现、边界处理与回归验证任务
+  - `docs/FRONTEND_GUIDELINES.md` 同步浮窗拖动与边界规范
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:51
+- 任务: 修正细胞颜色分档语义（去除 0 tick 档）
+- 完成:
+  - `docs/PRD.md` 将颜色分档改为“最年轻 / 1 tick 后 / 2 tick+”
+  - `docs/FRONTEND_GUIDELINES.md` 同步三档口径并移除 “0 tick” 描述
+  - `docs/IMPLEMENTATION_PLAN.md` 同步实现任务描述
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 14:59
+- 任务: 实现 spawn 缺省参数、三档颜色、控制台回退/复制粘贴、DNA 弹窗拖动
+- 完成:
+  - `fauna/control_panel.py` 修复 `spawn dna=...` 缺省参数（`x/y` 默认当前世界中心；其余参数回落默认）
+  - `fauna/control_panel.py` 新增 `undo`、`copy`、`paste` 命令与 `Ctrl/Cmd + C/V/Z` 快捷键
+  - `fauna/control_panel.py` 新增 DNA 浮窗标题栏拖拽与边界限制，保留关闭按钮可达
+  - `fauna/drawer.py` 将非空 RNA 颜色改为三档离散（最年轻/1 tick 后/2 tick+）
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选本轮实现与验证任务
+  - `docs/FRONTEND_GUIDELINES.md` 同步 `Ctrl/Cmd + Z` 为 `undo` 语义
+- 问题:
+  - 无头环境下系统剪贴板写入可能失败
+- 解决:
+  - 增加本地剪贴板回退并输出提示日志，保证复制粘贴可用
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. SDL_VIDEODRIVER=dummy python3 - <<'PY' ...` 自检通过（`spawn dna=...`、`Ctrl+C/V/Z`、DNA 弹窗拖拽）
+
+## 2026-03-12 15:03
+- 任务: 追加“细胞三档高对比配色由用户指定”需求入档
+- 完成:
+  - `docs/PRD.md` 将三档颜色改为高对比跨色轮方案（A/B/C 待用户指定）
+  - `docs/IMPLEMENTATION_PLAN.md` 追加“确认色值 -> 替换渲染常量 -> 可视化验证”任务
+  - `docs/FRONTEND_GUIDELINES.md` 同步为 A/B/C 待用户指定口径
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 15:08
+- 任务: 应用细胞三档高对比配色方案 2（蓝紫系）
+- 完成:
+  - `docs/PRD.md` 将 A/B/C 固化为 `#4CC9F0 / #4361EE / #7209B7`
+  - `docs/FRONTEND_GUIDELINES.md` 同步三档具体色值
+  - `fauna/drawer.py` 更新年龄颜色映射为方案 2
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选“确认色值/替换常量/验证”任务
+- 问题: 无
+- 解决: 无
+- 验证:
+  - `python3 -m compileall fauna/drawer.py` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. python3 - <<'PY' ...` 断言通过（age 0/1/2+ 映射到方案 2 色值）
+
+## 2026-03-12 15:16
+- 任务: 完成 IPP 剩余 5 项（方向属性/方向渲染/颜色可见性验证）
+- 完成:
+  - `fauna/cell.py` 新增 `direction` 属性，默认 `None`
+  - `fauna/simulation/cell_actions.py` 在移动成功后同步更新 `direction`
+  - `fauna/world.py` 快照中新增 `direction` 字段并支持回放恢复
+  - `fauna/world_persistence.py` 存档新增 `direction` 持久化，并兼容旧格式读取
+  - `fauna/drawer.py` 在渲染层增加方向箭头叠加（`w/a/s/d`）与对比箭头颜色
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选原未完成 5 项
+  - `docs/FRONTEND_GUIDELINES.md` 补充方向箭头可视化规则
+  - `docs/lessons.md` 新增“存档新增字段需兼容旧格式回退解析”经验项
+- 问题:
+  - 新版存档字段增加后需兼容旧存档行格式
+- 解决:
+  - 读取逻辑采用新格式优先 + 旧格式回退，避免破坏历史存档
+- 验证:
+  - `python3 -m compileall fauna/cell.py fauna/simulation/cell_actions.py fauna/world.py fauna/world_persistence.py fauna/drawer.py` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. SDL_VIDEODRIVER=dummy python3 - <<'PY' ...` 自检通过（方向默认值、移动后方向更新、快照/存档恢复、箭头渲染）
+
+## 2026-03-12 15:09
+- 任务: 收敛“完成 IPP 未完成项”范围并同步文档
+- 完成:
+  - `docs/PRD.md` 新增“2.6 本次需求目标（IPP收尾）”
+  - `docs/IMPLEMENTATION_PLAN.md` 在对齐说明中明确本轮收尾范围为未勾选 5 项
+- 问题: 无
+- 解决: 无
+
+## 2026-03-12 15:38
+- 任务: 落实“方向三角形显示 + 缩放改为 *6”并收口文档
+- 完成:
+  - 确认渲染实现为“方向三角形尖端指向 `w/a/s/d`”，不再使用方向箭头叠加
+  - 确认显示缩放默认值为 `DispConfig.scale=6`，窗口按 `scale` 自动计算（默认 `1200x630`）
+  - `fauna/simulation/headless_runner.py` 去除硬编码 `*4`，改为读取 `DispConfig.scale`
+  - `docs/PRD.md` 修正窗口尺寸描述为 `scale` 驱动并同步验收项
+  - `docs/FRONTEND_GUIDELINES.md` 同步最新布局尺寸与方向三角形规范
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选本轮新增 5 项任务
+- 问题:
+  - 文档中存在旧窗口尺寸（`1000x500`）和“箭头叠加”历史描述
+- 解决:
+  - 按当前实现统一为 `scale=6` 默认布局与三角形方向可视化，消除口径冲突
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. python3 - <<'PY' ...` 断言通过（`scale=6`、三角尖端方向正确）
+
+## 2026-03-12 16:40
+- 任务: 放弃三角形方向显示 + 新增最近 5 分钟日志调出 + 推送 GitHub
+- 完成:
+  - `fauna/drawer.py` 移除方向三角形渲染，恢复方向箭头叠加显示（`↑/←/↓/→`）
+  - `fauna/control_panel.py` 新增 `log5` 命令（别名 `logs-5m`、`recent-log`），读取最近 5 分钟日志并导出 `logs/recent_5m.log`
+  - `fauna/control_panel.py` 更新 `help` 文案与右侧交互示例，补充 `log5` 用法
+  - `docs/PRD.md`、`docs/IMPLEMENTATION_PLAN.md`、`docs/FRONTEND_GUIDELINES.md` 同步新规则
+  - `docs/IMPLEMENTATION_PLAN.md` 勾选本轮新增 5 项任务
+- 问题:
+  - 无
+- 解决:
+  - 无
+- 验证:
+  - `python3 -m compileall fauna` 通过
+  - `PYTHONPATH=. pytest -q tests/test_regression_targets.py` 通过（1 passed）
+  - `PYTHONPATH=. python3 - <<'PY' ...` 命令级自检通过（`log5` 仅导出最近 5 分钟日志）

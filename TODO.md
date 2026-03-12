@@ -1,2 +1,0 @@
-- 保存channel
-- DNA两步一空

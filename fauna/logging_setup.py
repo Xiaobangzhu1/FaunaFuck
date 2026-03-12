@@ -4,7 +4,7 @@ from typing import Optional
 from pathlib import Path
 from datetime import datetime
 
-from config import LogConfig
+from .config import LogConfig
 
 
 def setup_logging(name: str = "fauna") -> logging.Logger:

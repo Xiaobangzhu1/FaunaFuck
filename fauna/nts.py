@@ -2,7 +2,7 @@
 '''葡萄糖管理'''
 import pygame
 import random
-from config import *
+from .config import *
 
 import numpy as np
 
