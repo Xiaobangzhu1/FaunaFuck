@@ -9,6 +9,7 @@ from typing import Any
 import pygame
 
 from .config import CellConfig, LogConfig, UITheme
+from .simulation.cell_factory import _pick_initial_gene_dna
 
 
 class ControlPanel:
@@ -353,7 +354,7 @@ class ControlPanel:
             default_x = int(world.width // 2)
             default_y = int(world.height // 2)
             if not args:
-                dna = str(CellConfig.gene_DNA)
+                dna = _pick_initial_gene_dna()
                 x = default_x
                 y = default_y
                 count = 1
@@ -364,7 +365,7 @@ class ControlPanel:
                 fields: dict[str, Any] = {}
             else:
                 fields = self._parse_key_values(args)
-                dna = str(fields.pop('dna', CellConfig.gene_DNA))
+                dna = str(fields.pop('dna', _pick_initial_gene_dna()))
                 x = int(fields.pop('x', default_x))
                 y = int(fields.pop('y', default_y))
                 count = int(fields.pop('count', 1))

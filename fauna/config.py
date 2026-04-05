@@ -7,8 +7,8 @@ from pathlib import Path
 class MapConfig:
     '''地图大小'''
     
-    width : int = 100
-    height : int = 100
+    width : int = 20
+    height : int = 20
     channels : int = 256  # 神经递质通道数
     
     max_instructions : int = 1000  # 每个细胞每帧最大执行指令数
@@ -17,7 +17,7 @@ class DispConfig:
     '''显示设置'''
     
     fps : int = 60
-    scale : int = 6  # 窗口显示放大倍数（地图与细胞等比例放大）
+    scale : int = 24  # 窗口显示放大倍数（地图与细胞等比例放大）
 
 
 class UITheme:
@@ -43,8 +43,9 @@ class UITheme:
 class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
-    die_mode : int = 3
+    die_mode : int = 8
     gene_DNA : str = '<>!?!?><'  # 初始基因序列
+    gene_DNA_choices : list[str] = ['<>!?!?><', '<>!?>?!?><']  # 可选初始 DNA 组合
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列

@@ -104,6 +104,7 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
         """以给定概率返回 True 或 False"""
         return random.random() < rate
 
+    original_dna = gene_DNA
     global mutated
     mutated = False
     mutated_DNA = gene_DNA
@@ -134,7 +135,8 @@ def mutate_DNA(gene_DNA: str) -> Tuple[str, bool]:
 
     segments = _break_to_segments(gene_DNA, gene_mutation_rate)
     if len(segments) == 1:
-        return gene_DNA, False  # 无法切分，返回原序列
+        # 即使没有发生片段级突变，也可能发生了单碱基突变。
+        return gene_DNA, (gene_DNA != original_dna)
     segments = _duplicate_segment(segments)
     segments = _shuffle_segments(segments)
     mutated_DNA = _join_segments_with_connectors(segments)

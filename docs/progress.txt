@@ -258,6 +258,103 @@
 - 完成:
   - `docs/PRD.md` 更新为仅支持 `MODE == 2`，标记 `MODE == 1` 废弃
   - 新增 `docs/DNA_RULES.md`，写入 MODE2 转录映射与打开/关闭方式
+
+## 2026-04-05 20:28
+- 任务: 子代细胞朝向继承亲代朝向
+- 完成:
+  - `fauna/simulation/cell_actions.py` 在繁殖成功路径增加 `child_cell.direction = cell.direction`
+  - `tests/test_reproduction_mutation_sync.py` 增加朝向继承断言（变异命中与未命中两种场景）
+  - 勾选 `docs/IMPLEMENTATION_PLAN.md` 中对应两项任务
+- 问题:
+  - 当前环境缺少 `pytest`，无法直接运行 pytest 验证
+- 解决:
+  - 先执行语法编译校验，测试逻辑通过断言文件覆盖，待安装 pytest 后可一键回归
+
+## 2026-04-05 21:05
+- 任务: 完成 IPP 剩余项（朝向繁殖清除、首个初始方向、朝向繁殖选位、边界互通）
+- 完成:
+  - `fauna/simulation/cell_actions.py` 重构繁殖逻辑：
+    - 有朝向时仅按朝向单目标繁殖
+    - 繁殖目标坐标改为环形边界取模
+    - 朝向目标格有细胞时先标记死亡再落子
+    - 无朝向时保持原有四方向兼容策略（不额外清除占位细胞）
+  - `fauna/simulation/cell_factory.py` 增加初始化规则：首个初始细胞默认 `direction='w'`
+  - `tests/test_reproduction_mutation_sync.py` 新增/扩展回归：
+    - 朝向繁殖前方占位清除
+    - 无朝向兼容行为
+    - 四边界环形互通（左右上下）
+    - 首个初始细胞朝向默认值
+  - `docs/IMPLEMENTATION_PLAN.md` 将全部未勾选任务勾选完成
+- 问题:
+  - 新增回归初次执行出现 2 次断言失败（测试桩字段与用例期望不一致）
+- 解决:
+  - 补齐测试桩 `dead` 字段并修正无朝向用例断言后，`pytest` 全部通过
+- 验证:
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m pytest -q tests/test_reproduction_mutation_sync.py` -> `6 passed`
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m compileall fauna tests/test_reproduction_mutation_sync.py` 通过
+
+## 2026-04-05 21:22
+- 任务: 将 `.` 指令改为前向击杀，并在繁殖前复用同一击杀机制
+- 完成:
+  - `fauna/simulation/cell_actions.py` 新增 `kill_front_cell(cell)`，按当前 `direction` 计算前方一格并击杀目标细胞
+  - `fauna/simulation/cell_actions.py` 在 `reproduce` 开始处调用 `kill_front_cell(cell)`
+  - `fauna/cell.py` 新增 `kill()`，对外委托到 `cell_actions.kill_front_cell`
+  - `fauna/simulation/rna_executor.py` 将 `.` 指令由 `die` 改为 `kill`
+  - `tests/test_reproduction_mutation_sync.py` 增加 `.` 指令前向击杀与“繁殖前调用击杀”回归用例
+  - `docs/IMPLEMENTATION_PLAN.md` 新增并勾选 4 项对应任务
+- 问题:
+  - 新增用例初次失败（测试桩缺少 `kill/die/move_ribosome` 方法，且旧断言不匹配当前无朝向行为）
+- 解决:
+  - 补齐测试桩方法并修正断言后通过
+- 验证:
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m pytest -q tests/test_reproduction_mutation_sync.py` -> `8 passed`
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m compileall fauna tests/test_reproduction_mutation_sync.py` 通过
+
+## 2026-04-05 21:40
+- 任务: 统一朝向初始化规则为“所有细胞不出现无方向”
+- 完成:
+  - `fauna/cell.py` 将细胞构造默认朝向改为 `w/a/s/d` 随机值
+  - `fauna/simulation/cell_factory.py` 去除“首个细胞固定 `w`”后置覆盖，并在初始化构建时兜底方向归一化
+  - `fauna/world_persistence.py` 存档读取方向归一化改为：缺失/非法值随机修复为 `w/a/s/d`
+  - `fauna/world.py` 快照恢复方向归一化改为：缺失/非法值随机修复为 `w/a/s/d`
+  - `fauna/world.py` `spawn_cells` 拒绝写入非法 `direction` 属性，保持有效朝向不被破坏
+  - `tests/test_reproduction_mutation_sync.py` 更新方向相关断言，覆盖“缺失方向自动归一化”与“初始化方向全集在 `w/a/s/d`”
+  - `docs/PRD.md` 与 `docs/IMPLEMENTATION_PLAN.md` 同步口径
+- 问题:
+  - 回归初次失败：旧测试仍按“无朝向不击杀”和“初始化可为空方向”断言
+- 解决:
+  - 按新规则更新测试断言并对随机值打桩，回归通过
+- 验证:
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m pytest -q tests/test_reproduction_mutation_sync.py` -> `8 passed`
+
+## 2026-04-05 21:52
+- 任务: 扩展可选 DNA 组合（加入 `<>!?>?!?><`）
+- 完成:
+  - `fauna/config.py` 新增 `CellConfig.gene_DNA_choices`，包含 `<>!?!?><` 与 `<>!?>?!?><`
+  - `fauna/simulation/cell_factory.py` 初始化细胞时从 DNA 候选列表中选择默认组合
+  - `fauna/control_panel.py` 的 `spawn` 命令在未显式传入 `dna=` 时，从 DNA 候选列表中选择默认组合
+  - `tests/test_reproduction_mutation_sync.py` 新增初始化与 spawn 的 DNA 候选回归验证
+  - `docs/PRD.md`、`docs/IMPLEMENTATION_PLAN.md` 同步更新并勾选任务
+- 问题:
+  - 无
+- 解决:
+  - 无
+- 验证:
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m pytest -q tests/test_reproduction_mutation_sync.py` -> `10 passed`
+  - `C:/Users/32563/miniconda3/envs/faunafuck/python.exe -m compileall fauna tests/test_reproduction_mutation_sync.py` 通过
+
+## 2026-04-05 20:10
+- 任务: 实现“繁殖前变异检定同步影响亲代”机制
+- 完成:
+  - `fauna/simulation/cell_actions.py` 调整 `reproduce`：变异命中时同步更新亲代 `gene_DNA`，并立即重转录 RNA
+  - 变异命中后对亲代 `ribosome` 做安全归一化，避免 RNA 长度变化导致越界
+  - `fauna/dna_processing.py` 修正 `mutate_DNA` 返回值语义：仅发生单碱基突变时也能正确返回 `mutated=True`
+  - 新增 `tests/test_reproduction_mutation_sync.py` 覆盖命中/未命中两条行为分支
+  - 勾选 `docs/IMPLEMENTATION_PLAN.md` 对应三项任务
+- 问题:
+  - 当前环境缺少 `pytest`，无法直接执行 `pytest -q` 自动化测试
+- 解决:
+  - 使用临时断言脚本做命中/未命中路径验证，验证通过后清理临时脚本
   - `docs/IMPLEMENTATION_PLAN.md` 追加 MODE2-only 与“DNA 文档快捷键/按钮”实现任务
   - `docs/FRONTEND_GUIDELINES.md` 同步 DNA 浮窗新增快捷键/按钮入口
   - `STRUCTURE.md` 同步新增文档文件
