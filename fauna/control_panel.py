@@ -8,15 +8,17 @@ from typing import Any
 
 import pygame
 
-from .config import CellConfig, LogConfig, UITheme
+from .config import CellConfig, LogConfig, SaveConfig, UITheme
 
 
 class ControlPanel:
     def __init__(self) -> None:
         self.visible = True
         self.input_buffer = ''
+        self.cursor_index = 0
         self.messages: list[str] = []
         self._executed_command_history: list[str] = []
+        self._history_selection_index: int | None = None
         self._local_clipboard = ''
         self._font: pygame.font.Font | None = None
         self._small_font: pygame.font.Font | None = None
@@ -68,8 +70,49 @@ class ControlPanel:
             world.logger.warning('ControlPanel undo failed by %s: no history.', source)
             return
         self.input_buffer = self._executed_command_history.pop()
+        self.cursor_index = len(self.input_buffer)
+        self._history_selection_index = None
         self._push_message('Undo restored previous command to input.')
         world.logger.info('ControlPanel undo restored command by %s.', source)
+
+    def _set_input_buffer(self, text: str, from_history: bool = False) -> None:
+        self.input_buffer = text
+        self.cursor_index = max(0, min(self.cursor_index if not from_history else len(text), len(text)))
+        if not from_history:
+            self._history_selection_index = None
+
+    def _insert_text(self, text: str) -> None:
+        if not text:
+            return
+        left = self.input_buffer[: self.cursor_index]
+        right = self.input_buffer[self.cursor_index :]
+        self.input_buffer = left + text + right
+        self.cursor_index += len(text)
+        self._history_selection_index = None
+
+    def _copy_text_source(self, explicit: str | None = None) -> tuple[str, str]:
+        if explicit is not None:
+            return explicit, 'explicit'
+        if self._history_selection_index is not None and 0 <= self._history_selection_index < len(self._executed_command_history):
+            return self._executed_command_history[self._history_selection_index], 'history'
+        return self.input_buffer, 'input'
+
+    def _select_history(self, world, direction: int) -> None:
+        if not self._executed_command_history:
+            self._push_message('History is empty.')
+            world.logger.info('ControlPanel history selection ignored: empty history.')
+            return
+        if self._history_selection_index is None:
+            self._history_selection_index = len(self._executed_command_history) - 1 if direction < 0 else 0
+        else:
+            self._history_selection_index = max(
+                0,
+                min(len(self._executed_command_history) - 1, self._history_selection_index + direction),
+            )
+        selected = self._executed_command_history[self._history_selection_index]
+        self.input_buffer = selected
+        self.cursor_index = len(self.input_buffer)
+        self._push_message(f'History selected #{self._history_selection_index + 1}/{len(self._executed_command_history)}')
 
     def _ensure_scrap(self, world) -> None:
         if self._scrap_ready:
@@ -242,9 +285,11 @@ class ControlPanel:
         if cmd == 'help':
             self._push_message('spawn (use default cell config)')
             self._push_message('spawn dna=... x=.. y=.. count=.. channel=.. ribosome=.. x_step=.. y_step=..')
-            self._push_message('set CellConfig.die_mode=4')
+            self._push_message('set CellConfig.death_neighbor_threshold=4')
+            self._push_message('set CellConfig.reproduction_fail_rate=0.25')
             self._push_message('dna  (open transcription rules popup)')
             self._push_message('log5 (export/show recent 5-minute logs)')
+            self._push_message('save [path] | load [path]')
             self._push_message('undo | copy [text] | paste')
             self._push_message('Shortcuts apply only when input is empty (including "/").')
             self._push_message('Edit shortcuts: Ctrl/Cmd+C, Ctrl/Cmd+V, Ctrl/Cmd+Z')
@@ -260,14 +305,15 @@ class ControlPanel:
             return False
 
         if cmd == 'copy':
-            text_to_copy = ' '.join(args) if args else self.input_buffer
+            explicit = ' '.join(args) if args else None
+            text_to_copy, source = self._copy_text_source(explicit=explicit)
             if not text_to_copy:
                 self._push_message('Copy failed: empty input.')
                 world.logger.warning('ControlPanel copy failed: empty input.')
                 return False
             self._set_clipboard_text(world, text_to_copy, 'command')
-            self._push_message(f'Copied {len(text_to_copy)} chars.')
-            world.logger.info('ControlPanel copied %s chars by command.', len(text_to_copy))
+            self._push_message(f'Copied {len(text_to_copy)} chars from {source}.')
+            world.logger.info('ControlPanel copied %s chars by command (source=%s).', len(text_to_copy), source)
             return False
 
         if cmd == 'paste':
@@ -276,7 +322,7 @@ class ControlPanel:
                 self._push_message('Paste failed: clipboard is empty.')
                 world.logger.warning('ControlPanel paste failed: clipboard empty.')
                 return False
-            self.input_buffer += pasted
+            self._insert_text(pasted)
             self._push_message(f'Pasted {len(pasted)} chars to input.')
             world.logger.info('ControlPanel pasted %s chars by command.', len(pasted))
             return False
@@ -347,6 +393,38 @@ class ControlPanel:
             except Exception as error:
                 self._push_message(f'log5 failed: {error}')
                 world.logger.error('ControlPanel log5 failed: %s', error)
+            return False
+
+        if cmd in {'save', 'write'}:
+            try:
+                if args:
+                    target = Path(args[0])
+                else:
+                    target = Path(SaveConfig.autosave_dir) / f'manual_tick_{world.ticks}.txt'
+                target.parent.mkdir(parents=True, exist_ok=True)
+                world.save_world_state(str(target))
+                self._push_message(f'save: {target}')
+                world.logger.info('ControlPanel save command wrote %s', target)
+            except Exception as error:
+                self._push_message(f'save failed: {error}')
+                world.logger.error('ControlPanel save failed: %s', error)
+            return False
+
+        if cmd in {'load', 'read'}:
+            try:
+                source = Path(args[0]) if args else Path(SaveConfig.read_path)
+                if not str(source):
+                    self._push_message('load failed: missing path.')
+                    world.logger.warning('ControlPanel load failed: missing path.')
+                    return False
+                world.read_world_state(str(source))
+                world.paused = True
+                world._record_snapshot('load-command')
+                self._push_message(f'load: {source}')
+                world.logger.info('ControlPanel load command read %s', source)
+            except Exception as error:
+                self._push_message(f'load failed: {error}')
+                world.logger.error('ControlPanel load failed: %s', error)
             return False
 
         if cmd == 'spawn':
@@ -448,13 +526,14 @@ class ControlPanel:
 
         if self.visible and (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
             if event.key == pygame.K_c:
-                if not self.input_buffer:
+                text_to_copy, source = self._copy_text_source()
+                if not text_to_copy:
                     self._push_message('Copy failed: empty input.')
                     world.logger.warning('ControlPanel shortcut copy failed: empty input.')
                     return recreate_display
-                self._set_clipboard_text(world, self.input_buffer, 'shortcut')
-                self._push_message(f'Copied {len(self.input_buffer)} chars.')
-                world.logger.info('ControlPanel copied %s chars by shortcut.', len(self.input_buffer))
+                self._set_clipboard_text(world, text_to_copy, 'shortcut')
+                self._push_message(f'Copied {len(text_to_copy)} chars from {source}.')
+                world.logger.info('ControlPanel copied %s chars by shortcut (source=%s).', len(text_to_copy), source)
                 return recreate_display
             if event.key == pygame.K_v:
                 pasted = self._get_clipboard_text(world, 'shortcut')
@@ -462,7 +541,7 @@ class ControlPanel:
                     self._push_message('Paste failed: clipboard is empty.')
                     world.logger.warning('ControlPanel shortcut paste failed: clipboard empty.')
                     return recreate_display
-                self.input_buffer += pasted
+                self._insert_text(pasted)
                 self._push_message(f'Pasted {len(pasted)} chars to input.')
                 world.logger.info('ControlPanel pasted %s chars by shortcut.', len(pasted))
                 return recreate_display
@@ -528,6 +607,8 @@ class ControlPanel:
         if event.key == pygame.K_RETURN:
             command = self.input_buffer.strip()
             self.input_buffer = ''
+            self.cursor_index = 0
+            self._history_selection_index = None
             if command:
                 try:
                     recreate_display = self._execute_command(world, command)
@@ -537,15 +618,41 @@ class ControlPanel:
                     world.logger.error(message)
             return recreate_display
         if event.key == pygame.K_BACKSPACE:
-            self.input_buffer = self.input_buffer[:-1]
+            if self.cursor_index > 0:
+                self.input_buffer = self.input_buffer[: self.cursor_index - 1] + self.input_buffer[self.cursor_index :]
+                self.cursor_index -= 1
+                self._history_selection_index = None
             return recreate_display
         if event.key == pygame.K_SPACE:
-            self.input_buffer += ' '
+            self._insert_text(' ')
+            return recreate_display
+
+        if event.key == pygame.K_UP:
+            self._select_history(world, -1)
+            return recreate_display
+
+        if event.key == pygame.K_DOWN:
+            if self._history_selection_index is None:
+                return recreate_display
+            if self._history_selection_index < len(self._executed_command_history) - 1:
+                self._select_history(world, 1)
+            else:
+                self._history_selection_index = None
+                self.input_buffer = ''
+                self.cursor_index = 0
+            return recreate_display
+
+        if event.key == pygame.K_LEFT and not empty_input:
+            self.cursor_index = max(0, self.cursor_index - 1)
+            return recreate_display
+
+        if event.key == pygame.K_RIGHT and not empty_input:
+            self.cursor_index = min(len(self.input_buffer), self.cursor_index + 1)
             return recreate_display
 
         char = event.unicode
         if char and char.isprintable():
-            self.input_buffer += char
+            self._insert_text(char)
         return recreate_display
 
     def _render_dna_popup(self, screen: pygame.Surface) -> None:
@@ -635,12 +742,15 @@ class ControlPanel:
                 f'size={world.width}x{world.height} channels={world.NTs.map.shape[2]}',
                 'Hotkeys: TAB, SPACE, LEFT, RIGHT, /, F5, F6, F7, F8',
                 'Edit: Ctrl/Cmd+C copy, Ctrl/Cmd+V paste, Ctrl/Cmd+Z undo',
+                'History: UP/DOWN select previous commands',
                 'Shortcuts work only when input is empty',
                 'Type "help" then press ENTER for full commands',
                 'Example: spawn dna=<>!?!?>< x=10 y=10 count=3 channel=1',
-                'Example: set CellConfig.die_mode=4',
+                'Example: set CellConfig.death_neighbor_threshold=4',
+                'Example: set CellConfig.reproduction_fail_rate=0.25',
                 'Example: dna',
                 'Example: log5',
+                'Example: save saves/manual.txt | load saves/manual.txt',
             ]
             for line in status_lines:
                 y = self._draw_wrapped_text(
@@ -670,7 +780,8 @@ class ControlPanel:
                 y += button_h + 8
 
             y += 6
-            prompt_lines = self._wrap_text(self._font, f': {self.input_buffer}', max_text_width)[-2:]
+            prompt_text = f': {self.input_buffer}'
+            prompt_lines = self._wrap_text(self._font, prompt_text, max_text_width)[-2:]
             last_prompt_line = ''
             for line in prompt_lines:
                 if y + 22 > y_limit:
@@ -680,9 +791,15 @@ class ControlPanel:
                 last_prompt_line = line
                 y += 22
 
-            if last_prompt_line and (pygame.time.get_ticks() // 500) % 2 == 0:
+            if (pygame.time.get_ticks() // 500) % 2 == 0:
+                cursor_prompt = f': {self.input_buffer[: self.cursor_index]}'
+                cursor_lines = self._wrap_text(self._font, cursor_prompt, max_text_width)[-2:]
+                if cursor_lines:
+                    cursor_line = cursor_lines[-1]
+                else:
+                    cursor_line = ''
                 cursor_text = self._font.render('|', True, UITheme.accent_hover)
-                cursor_x = x0 + self._font.size(last_prompt_line)[0] + 2
+                cursor_x = x0 + self._font.size(cursor_line)[0] + 2
                 cursor_y = y - 22
                 if cursor_x < panel_rect.right - 8:
                     screen.blit(cursor_text, (cursor_x, cursor_y))

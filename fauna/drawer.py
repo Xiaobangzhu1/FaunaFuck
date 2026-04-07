@@ -8,13 +8,6 @@ EMPTY_RNA_COLOR = UITheme.state_error
 AGE_YOUNGEST_COLOR = (76, 201, 240)   # #4CC9F0
 AGE_1TICK_COLOR = (67, 97, 238)       # #4361EE
 AGE_2PLUS_COLOR = (114, 9, 183)       # #7209B7
-DIRECTION_KEYS = {'w', 'a', 's', 'd'}
-DIRECTION_ARROW_MAP = {
-    'w': '↑',
-    'a': '←',
-    's': '↓',
-    'd': '→',
-}
 
 def draw_cell_on(surface: pygame.Surface, x: int, y: int, color=(255, 255, 255)) -> None:
     ix = int(x) % MapConfig.width
@@ -36,59 +29,11 @@ def get_cell_color(cell) -> tuple[int, int, int]:
     return _interpolate_age_color(int(getattr(cell, 'age_ticks', 0)))
 
 
-def draw_cells(surface: pygame.Surface, cells: Iterable, skip_directional: bool = False) -> None:
+def draw_cells(surface: pygame.Surface, cells: Iterable) -> None:
     for c in cells:
         if getattr(c, 'dead', False):
             continue
-        if skip_directional and getattr(c, 'direction', None) in DIRECTION_KEYS:
-            continue
         draw_cell_on(surface, c.x, c.y, get_cell_color(c))
-
-
-def _overlay_arrow_color(fill_color: tuple[int, int, int]) -> tuple[int, int, int]:
-    # 按亮度自动选择深/浅箭头色，保证在细胞底色上可读。
-    luminance = 0.299 * fill_color[0] + 0.587 * fill_color[1] + 0.114 * fill_color[2]
-    return UITheme.bg_base if luminance > 160 else UITheme.text_primary
-
-
-def draw_direction_arrows(surface: pygame.Surface, cells: Iterable, grid_size: tuple[int, int]) -> None:
-    grid_w, grid_h = grid_size
-    if grid_w <= 0 or grid_h <= 0:
-        return
-    scale_x = surface.get_width() / float(grid_w)
-    scale_y = surface.get_height() / float(grid_h)
-    font_cache: dict[int, pygame.font.Font] = {}
-
-    for cell in cells:
-        if getattr(cell, 'dead', False):
-            continue
-        direction = getattr(cell, 'direction', None)
-        if direction not in DIRECTION_KEYS:
-            continue
-        cell_x = int(cell.x)
-        cell_y = int(cell.y)
-        left = int(cell_x * scale_x)
-        top = int(cell_y * scale_y)
-        right = int((cell_x + 1) * scale_x)
-        bottom = int((cell_y + 1) * scale_y)
-        if right <= left:
-            right = left + 1
-        if bottom <= top:
-            bottom = top + 1
-        block_w = max(1, right - left)
-        block_h = max(1, bottom - top)
-        font_size = max(8, int(min(block_w, block_h) * 0.9))
-        font = font_cache.get(font_size)
-        if font is None:
-            font = pygame.font.SysFont('Consolas', font_size)
-            font_cache[font_size] = font
-        arrow = DIRECTION_ARROW_MAP.get(direction, '')
-        if not arrow:
-            continue
-        arrow_surface = font.render(arrow, True, _overlay_arrow_color(get_cell_color(cell)))
-        arrow_x = left + (block_w - arrow_surface.get_width()) // 2
-        arrow_y = top + (block_h - arrow_surface.get_height()) // 2
-        surface.blit(arrow_surface, (arrow_x, arrow_y))
 
 
 def draw_tick(surface: pygame.Surface, tick: int) -> None:
@@ -119,7 +64,7 @@ def render_frame(target_surface: pygame.Surface, world) -> None:
     # 例如：如果 world.NTs.map 是二维或三维矩阵，可以在此转为彩色表面后 blit 到 base
 
     # 绘制细胞
-    draw_cells(base, world.cells, skip_directional=False)
+    draw_cells(base, world.cells)
 
     # 如需在此绘制 tick，可取消注释：
     # draw_tick(base, world.ticks)
@@ -127,7 +72,6 @@ def render_frame(target_surface: pygame.Surface, world) -> None:
     # 放大到目标窗口大小
     scaled = pygame.transform.scale(base, target_surface.get_size())
     target_surface.blit(scaled, (0, 0))
-    draw_direction_arrows(target_surface, world.cells, base_size)
 
 def draw_cell(x, y, screen: pygame.surface.Surface, color=(255, 255, 255), size: int = 5) -> None:
     """绘制细胞为 size×size 的实心方块，带地图环绕"""

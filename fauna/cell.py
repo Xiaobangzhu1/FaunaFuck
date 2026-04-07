@@ -120,7 +120,7 @@ class Cell():
         execute_rna(self)
       
     def check_death(self) -> None:
-        """若**所有**相邻格都被占满则死亡"""
+        """按上/下/左/右四邻格计数，达到 death_neighbor_threshold 则死亡。"""
         cell_actions.check_death(self)
             
         

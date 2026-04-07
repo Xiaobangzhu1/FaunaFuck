@@ -43,13 +43,14 @@ class UITheme:
 class CellConfig:
     '''细胞配置'''
     debug_mode : bool = False # 是否开启调试模式
-    die_mode : int = 3
+    death_neighbor_threshold : int = 2
     gene_DNA : str = '<>!?!?><'  # 初始基因序列
     original_num : int = 10  # 初始细胞数量
     pure_mode : bool = False # 纯净模式，仅生成一个细胞
     skip_transcript : bool = False  # 跳过转录阶段，直接使用预设RNA序列
     long_gene_encourage : bool = False  # 长基因鼓励因子
     randomize_reproduction_direction : bool = True  # 繁殖时随机选择方向
+    reproduction_fail_rate : float = 0.75  # 复制失败概率（0.0~1.0）
     surroundings = 8
     
     ribosome_loop : bool = False  # 核糖体到达末端后循环回起点

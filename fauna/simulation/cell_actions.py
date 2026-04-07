@@ -60,11 +60,23 @@ def change_number(cell, command: str) -> None:
 
 
 def reproduce(cell) -> bool:
+    fail_rate = float(getattr(CellConfig, 'reproduction_fail_rate', 0.0))
+    fail_rate = min(1.0, max(0.0, fail_rate))
+    if fail_rate > 0.0 and random.random() < fail_rate:
+        return False
+
     child_dna, _ = mutate_DNA(cell.gene_DNA)
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    preferred_map = {'d': (1, 0), 'a': (-1, 0), 's': (0, 1), 'w': (0, -1)}
+    preferred = preferred_map.get(getattr(cell, 'direction', None))
+    ordered: list[tuple[int, int]] = []
+    if preferred is not None and preferred in directions:
+        ordered.append(preferred)
+        directions.remove(preferred)
     if CellConfig.randomize_reproduction_direction:
         random.shuffle(directions)
-    for dx, dy in directions:
+    ordered.extend(directions)
+    for dx, dy in ordered:
         new_x = int(cell.x + dx)
         new_y = int(cell.y + dy)
         if new_x < 0 or new_x >= MapConfig.width or new_y < 0 or new_y >= MapConfig.height:
@@ -131,18 +143,10 @@ def move_ribosome(cell, position: str = 'forward') -> None:
 def check_death(cell) -> None:
     if not hasattr(cell, 'world') or cell.world is None:
         return
-    needed = CellConfig.die_mode
-    if CellConfig.surroundings == 24:
-        surroundings = [(-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2),
-                        (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2),
-                        (0, -2), (0, -1), (0, 1), (0, 2),
-                        (1, -2), (1, -1), (1, 0), (1, 1), (1, 2),
-                        (2, -2), (2, -1), (2, 0), (2, 1), (2, 2)]
-    elif CellConfig.surroundings == 4:
-        surroundings = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-    else:
-        surroundings = [(-1, 0), (1, 0), (0, -1), (0, 1),
-                        (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    needed = CellConfig.death_neighbor_threshold
+    # Death neighborhood is fixed to orthogonal 4-neighbors:
+    # up, down, left, right.
+    surroundings = [(0, -1), (0, 1), (-1, 0), (1, 0)]
     x0, y0 = int(cell.x), int(cell.y)
     count = 0
     for dx, dy in surroundings:

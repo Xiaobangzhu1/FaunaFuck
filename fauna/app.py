@@ -53,10 +53,16 @@ def run() -> None:
     screen = _create_screen(window_width, window_height)
     pygame.display.set_caption('Fauna F**k')
 
-    SaveConfig.read = 0
-    SaveConfig.read_path = ''
     world = World(MapConfig.width, MapConfig.height, start_empty=True)
-    world.logger.info('Sandbox mode started: empty world, save read disabled.')
+    if SaveConfig.read:
+        try:
+            world.read_world_state(SaveConfig.read_path)
+            world._record_snapshot('startup-load')
+            world.logger.info('Startup loaded save from %s', SaveConfig.read_path)
+        except Exception as error:
+            world.logger.warning('Startup load failed (%s), continue with empty world.', error)
+    else:
+        world.logger.info('Sandbox mode started: empty world, save read disabled.')
     panel = ControlPanel()
     running = True
     clock = pygame.time.Clock()

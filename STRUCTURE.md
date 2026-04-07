@@ -2,6 +2,8 @@
 
 ## 顶层文件
 - `AGENTS.md`: Codex 协作指令与流程约定。
+- `SEED.md`: 跨项目 AGENT 生成母规范（含项目类型询问与同步策略）。
+- `CHANGELOG.md`: `Agent_Seed` 规范版本变更记录。
 - `STRUCTURE.md`: 当前文件，说明各文件夹与文件用途。
 - `.gitignore`: Git 忽略规则。
 - `.DS_Store`: macOS Finder 元数据（可忽略）。
@@ -15,13 +17,21 @@
 - `data/`: 数据输入/样例。
   - `expdata1203.zip`: 实验数据包。
 - `docs/`: 项目文档。
+  - `README.md`: 文档索引（PRD / 系统设计 / IPP 边界与阅读顺序）。
   - `PRD.md`: 产品需求文档。
+  - `system-core-loop.md`: 核心循环系统设计。
+  - `system-entities-and-state.md`: 实体与状态系统设计。
+  - `system-cell-behavior.md`: 细胞行为系统设计。
+  - `system-visualization-and-debug.md`: 可视化与调试系统设计。
+  - `system-rules-and-edge-cases.md`: 规则冲突与边界情况设计。
   - `DNA_RULES.md`: DNA 转录规则文档（MODE2-only）。
   - `IMPLEMENTATION_PLAN.md`: 实施计划。
   - `FRONTEND_GUIDELINES.md`: 前端/展示规范。
+  - `architecture-example-seed-driven-governance.md`: SEED 驱动三层治理架构案例。
   - `lessons.md`: 报错原因与解决方案记录。
-  - `TODO.md`: 待办事项。
   - `progress.txt`: 进度记录。
+  - `archives/`: 文档历史归档。
+    - `prd-history.md`: PRD 历史目标与阶段记录。
 - `fauna/`: 核心代码包。
   - `__init__.py`: 包标识。
   - `cli.py`: 主入口（带图形界面）。
@@ -50,11 +60,20 @@
   - `gene_editing_tools.ipynb`: 基因编辑工具实验。
 - `saves/`: 运行存档输出目录。
 - `tests/`: 测试用例。
+  - `test_orthogonal_death_rule.py`: 四邻格死亡判定测试。
   - `test_regression_targets.py`: seed=42 回归测试。
 - `tools/`: 辅助分析与可视化脚本。
   - `animation_generator.py`: 日志动画生成核心。
   - `make_animation.py`: 一键生成动画入口。
   - `log_analyzer.py`: 日志分析与报告。
+- `templates/`: `Agent_Seed` 项目类型模板库。
+  - `game-sim.md`: 游戏/模拟类 AGENT 模板。
+  - `backend-service.md`: 后端服务类 AGENT 模板。
+  - `automation-script.md`: 自动化脚本类 AGENT 模板。
+  - `data-pipeline.md`: 数据流程类 AGENT 模板。
+- `examples/`: `Agent_Seed` 生成示例。
+  - `generated-agents.game-sim.md`: game-sim 目标 AGENTS 示例。
+  - `generated-copilot.game-sim.md`: game-sim 目标 copilot 指令示例。
 - `__pycache__/`: Python 字节码缓存（可忽略）。
 - `.pytest_cache/`: Pytest 缓存（可忽略）。
 - `simulation/`: 旧目录残留缓存（仅 `__pycache__`，可忽略）。
@@ -81,6 +100,5 @@
 - `IMPLEMENTATION_PLAN.md` -> `docs/IMPLEMENTATION_PLAN.md`
 - `FRONTEND_GUIDELINES.md` -> `docs/FRONTEND_GUIDELINES.md`
 - `lessons.md` -> `docs/lessons.md`
-- `TODO.md` -> `docs/TODO.md`
 - `progress.txt` -> `docs/progress.txt`
 - `saves.zip` -> `archives/saves.zip`
