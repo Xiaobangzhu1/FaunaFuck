@@ -2,6 +2,7 @@
 
 ## 顶层文件
 - `AGENTS.md`: Codex 协作指令与流程约定。
+- `README.md`: 仓库入口说明（项目简介、启动方式、测试方式、文档导航）。
 - `SEED.md`: 跨项目 AGENT 生成母规范（含项目类型询问与同步策略）。
 - `CHANGELOG.md`: `Agent_Seed` 规范版本变更记录。
 - `STRUCTURE.md`: 当前文件，说明各文件夹与文件用途。

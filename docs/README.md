@@ -2,6 +2,7 @@
 
 ## 1. 文档树
 
+- `README.md`：仓库入口（项目简介、启动方式、测试方式、文档入口）
 - `docs/PRD.md`：高层需求（做什么/为什么/成功标准）
 - `docs/system-core-loop.md`：核心循环设计
 - `docs/system-entities-and-state.md`：实体与状态设计
@@ -19,10 +20,11 @@
 ## 2. 阅读顺序建议
 
 1. `docs/PRD.md`（理解项目定位与成功标准）
-2. 系统设计文档（按主题阅读）
-3. `docs/DNA_RULES.md`（转录映射细节）
-4. `docs/IMPLEMENTATION_PLAN.md`（看实现顺序与验证）
-5. `docs/archives/prd-history.md`（只看历史背景时再读）
+2. `README.md`（查看仓库入口、运行方式与文档导航）
+3. 系统设计文档（按主题阅读）
+4. `docs/DNA_RULES.md`（转录映射细节）
+5. `docs/IMPLEMENTATION_PLAN.md`（看实现顺序与验证）
+6. `docs/archives/prd-history.md`（只看历史背景时再读）
 
 ## 3. 边界说明
 

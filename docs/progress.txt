@@ -198,6 +198,7 @@
 
 ## 2026-03-12 14:02
 - 任务: 实现交互命令与可视化规则完善计划
+
 - 完成:
   - `fauna/control_panel.py` 新增 `dna` 命令与游戏内非模态 DNA 规则浮窗（自适应大小，支持 `ESC` 和右上角按钮关闭）
   - 快捷键优先级调整为“仅输入框为空时触发”（`SPACE/F5/F6/F7/F8/LEFT/RIGHT`）
@@ -690,3 +691,14 @@
   - 保留该失败为独立环境/基线问题；本次功能相关测试已全部通过
 - 验证:
   - `PYTHONPATH=. pytest -q tests/test_control_panel_cursor_and_history_copy.py tests/test_control_panel_save_load_commands.py tests/test_reproduction_direction_priority.py tests/test_orthogonal_death_rule.py` 通过（10 passed）
+
+## 2026-04-07
+- 任务: 补充仓库根 README
+- 完成:
+  - 新增根目录 `README.md`，整理项目简介、启动命令、测试命令、常用控制命令与文档入口
+  - 同步更新 `docs/PRD.md`、`docs/IMPLEMENTATION_PLAN.md`、`docs/README.md`
+  - 同步更新 `STRUCTURE.md`，登记新增顶层 `README.md`
+- 问题:
+  - `requirements.txt` 为导出的 Conda 环境清单，不适合在 README 中逐项展开说明
+- 解决:
+  - README 只保留最小运行依赖与推荐启动/测试命令，详细结构交给 `STRUCTURE.md` 与 `docs/README.md`
