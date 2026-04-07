@@ -35,7 +35,7 @@ class Cell():
         self.world = world
         self.dead = False
         self.age_ticks = 0
-        self.direction: Optional[str] = None
+        self.direction: Optional[str] = random.choice(['w', 'a', 's', 'd'])
         
         
     
@@ -80,6 +80,9 @@ class Cell():
     
     def die(self, reason: str) -> None:
         cell_actions.die(self, reason)
+
+    def kill(self) -> bool:
+        return cell_actions.kill_front_cell(self)
 
     def jump_forward(self, command: str) -> None:
         """'[' 指令: 若当前 (x,y) 的当前 channel 值为 0 则跳转, 否则 ribosome+1"""

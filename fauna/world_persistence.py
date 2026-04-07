@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import os
+import random
 
 import numpy as np
 
 from .nts import NTs
 
 
-def _normalize_direction(raw: str | None) -> str | None:
+def _normalize_direction(raw: str | None) -> str:
     if raw is None:
-        return None
+        return random.choice(['w', 'a', 's', 'd'])
     direction = str(raw).strip()
     if direction in {'w', 'a', 's', 'd'}:
         return direction
-    return None
+    return random.choice(['w', 'a', 's', 'd'])
 
 
 def _build_cell(world, x, y, dna_line: str, rbs_line: str, channel_line: str, age: int, direction: str | None):

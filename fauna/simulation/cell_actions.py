@@ -60,12 +60,78 @@ def change_number(cell, command: str) -> None:
 
 
 def reproduce(cell) -> bool:
+<<<<<<< HEAD
     fail_rate = float(getattr(CellConfig, 'reproduction_fail_rate', 0.0))
     fail_rate = min(1.0, max(0.0, fail_rate))
     if fail_rate > 0.0 and random.random() < fail_rate:
         return False
 
     child_dna, _ = mutate_DNA(cell.gene_DNA)
+=======
+    _ensure_direction(cell)
+    kill_front_cell(cell)
+    child_dna, mutated = mutate_DNA(cell.gene_DNA)
+    if mutated:
+        cell.gene_DNA = child_dna
+        cell.transcript()
+        cell.ribosome = 0
+    direction_map = {
+        'd': (1, 0),
+        'a': (-1, 0),
+        'w': (0, -1),
+        's': (0, 1),
+    }
+    (dx, dy) = direction_map[cell.direction]
+    target_x = (int(cell.x) + dx) % MapConfig.width
+    target_y = (int(cell.y) + dy) % MapConfig.height
+    
+    child_cell = cell.__class__(target_x, target_y, child_dna, cell.NTs, world=cell.world)
+    child_cell.channel = cell.channel
+    child_cell.direction = cell.direction
+    child_cell.locked = True
+    cell.world.new_cells.append(child_cell)
+    return True
+
+
+def kill_front_cell(cell) -> bool:
+    _ensure_direction(cell)
+    direction_map = {
+        'd': (1, 0),
+        'a': (-1, 0),
+        'w': (0, -1),
+        's': (0, 1),
+    }
+    facing = getattr(cell, 'direction', None)
+
+    dx, dy = direction_map[facing]
+    target_x = (int(cell.x) + dx) % MapConfig.width
+    target_y = (int(cell.y) + dy) % MapConfig.height
+    for other in cell.world.cells:
+        if other is cell or getattr(other, 'dead', False):
+            continue
+        if int(other.x) == target_x and int(other.y) == target_y:
+            other.dead = True
+            return True
+    return False
+
+
+def _ensure_direction(cell) -> None:
+    if getattr(cell, 'direction', None) not in {'w', 'a', 's', 'd'}:
+        cell.direction = random.choice(['w', 'a', 's', 'd'])
+
+
+def _reproduction_directions(cell) -> tuple[list[tuple[int, int]], bool]:
+    direction_map = {
+        'd': (1, 0),
+        'a': (-1, 0),
+        'w': (0, -1),
+        's': (0, 1),
+    }
+    facing = getattr(cell, 'direction', None)
+    if facing in direction_map:
+        # 有朝向时仅沿朝向繁殖
+        return [direction_map[facing]], True
+>>>>>>> 479e35c90bef12a6893e584f2d27ebdc1dcd879c
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     preferred_map = {'d': (1, 0), 'a': (-1, 0), 's': (0, 1), 'w': (0, -1)}
     preferred = preferred_map.get(getattr(cell, 'direction', None))
@@ -75,19 +141,38 @@ def reproduce(cell) -> bool:
         directions.remove(preferred)
     if CellConfig.randomize_reproduction_direction:
         random.shuffle(directions)
+<<<<<<< HEAD
     ordered.extend(directions)
     for dx, dy in ordered:
         new_x = int(cell.x + dx)
         new_y = int(cell.y + dy)
         if new_x < 0 or new_x >= MapConfig.width or new_y < 0 or new_y >= MapConfig.height:
+=======
+    return directions, False
+
+
+def _prepare_target_for_reproduction(cell, target_x: int, target_y: int, force_clear: bool) -> bool:
+    target = (int(target_x), int(target_y))
+    if target in cell.world.pending_positions:
+        return False
+
+    occupied_cell = None
+    for other in cell.world.cells:
+        if other is cell or getattr(other, 'dead', False):
+>>>>>>> 479e35c90bef12a6893e584f2d27ebdc1dcd879c
             continue
-        if cell.world.reserve_position(new_x, new_y):
-            child_cell = cell.__class__(new_x, new_y, child_dna, cell.NTs, world=cell.world)
-            child_cell.channel = cell.channel
-            child_cell.locked = True
-            cell.world.new_cells.append(child_cell)
-            return True
-    return False
+        if int(other.x) == target[0] and int(other.y) == target[1]:
+            occupied_cell = other
+            break
+
+    if occupied_cell is not None:
+        if not force_clear:
+            return False
+        # 朝向繁殖目标格有细胞时，先直接清除再落子
+        occupied_cell.dead = True
+
+    cell.world.pending_positions.add(target)
+    return True
 
 
 def die(cell, reason: str) -> None:

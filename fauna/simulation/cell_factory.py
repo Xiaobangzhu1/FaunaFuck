@@ -25,10 +25,10 @@ def build_initial_cells(cell_cls: type['Cell'], nts: 'NTs', world: 'World') -> L
     if CellConfig.pure_mode:
         x = MapConfig.width // 2
         y = MapConfig.height // 2
-        cells.append(cell_cls(x, y, CellConfig.gene_DNA, nts, world=world))
+        cells.append(cell_cls(x, y, _pick_initial_gene_dna(), nts, world=world))
         return cells
     for _ in range(num):
-        cells.append(_build_random_cell(cell_cls, nts, world, CellConfig.gene_DNA))
+        cells.append(_build_random_cell(cell_cls, nts, world, _pick_initial_gene_dna()))
     return cells
 
 
@@ -66,4 +66,14 @@ def _build_random_cell(cell_cls: type['Cell'], nts: 'NTs', world: 'World', gene_
     x = min(max(0, int(rawx)), MapConfig.width)
     rawy = random.normalvariate(MapConfig.height / 2, MapConfig.height / 8)
     y = min(max(0, int(rawy)), MapConfig.height)
-    return cell_cls(x, y, gene_dna, nts, world=world)
+    cell = cell_cls(x, y, gene_dna, nts, world=world)
+    if getattr(cell, 'direction', None) not in {'w', 'a', 's', 'd'}:
+        cell.direction = random.choice(['w', 'a', 's', 'd'])
+    return cell
+
+
+def _pick_initial_gene_dna() -> str:
+    choices = list(getattr(CellConfig, 'gene_DNA_choices', []) or [])
+    if choices:
+        return random.choice(choices)
+    return str(CellConfig.gene_DNA)

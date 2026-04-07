@@ -4,6 +4,7 @@
 import pygame
 from typing import List
 import logging
+import random
 
 from .config import CellConfig, DispConfig, LogConfig, MapConfig, RandomConfig, SaveConfig
 from .nts import NTs
@@ -146,7 +147,7 @@ class World:
             cell.transcripted_flag = bool(item['transcripted_flag'])
             cell.age_ticks = int(item.get('age_ticks', 0))
             direction = item.get('direction')
-            cell.direction = direction if direction in {'w', 'a', 's', 'd'} else None
+            cell.direction = direction if direction in {'w', 'a', 's', 'd'} else random.choice(['w', 'a', 's', 'd'])
             self.cells.append(cell)
         self.new_cells = []
         self.pending_positions.clear()
@@ -253,6 +254,8 @@ class World:
             if attributes:
                 for key, value in attributes.items():
                     if key in {'world', 'NTs', 'logger'}:
+                        continue
+                    if key == 'direction' and value not in {'w', 'a', 's', 'd'}:
                         continue
                     if hasattr(cell, key):
                         setattr(cell, key, value)

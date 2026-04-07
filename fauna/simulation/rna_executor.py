@@ -24,7 +24,7 @@ def execute_rna(cell) -> None:
                 cell.move_ribosome()
                 return
             if command == '.':
-                cell.die('Executed death command.')
+                cell.kill()
                 cell.move_ribosome()
                 return
             if command.startswith('['):
